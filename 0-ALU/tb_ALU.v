@@ -3,7 +3,7 @@ module tb_ALU;
     reg [31:0] a;
     reg [31:0] b;
     reg [3:0] alu_control;
-    wire [31:0] result;
+    wire [31:0] alu_result;
     wire zero;
     integer errors=0;
 
@@ -11,7 +11,7 @@ module tb_ALU;
         .a(a),
         .b(b),
         .alu_control(alu_control),
-        .result(result),
+        .alu_result(alu_result),
         .zero(zero)
     );
 
@@ -20,8 +20,8 @@ module tb_ALU;
         b=32'h1;
         alu_control=4'd0;
         #10;
-        if(result!==32'h0) begin
-            $display("ADD fail,result=%h,expect 32'd0",result);
+        if(alu_result!==32'h0) begin
+            $display("ADD fail,result=%h,expect 32'd0",alu_result);
             errors=errors+1;
         end else $display("ADD PASS");
         if(zero!==1) begin
@@ -34,8 +34,8 @@ module tb_ALU;
         b=32'd5;
         alu_control=4'd1;
         #10;
-        if(result!==32'hFFFF_FFFE) begin
-            $display("SUB fail,result=%h,expect 32'hFFFF_FFFE",result);
+        if(alu_result!==32'hFFFF_FFFE) begin
+            $display("SUB fail,result=%h,expect 32'hFFFF_FFFE",alu_result);
             errors=errors+1;
         end else $display("SUB PASS");
         if(zero!==0) begin
@@ -48,15 +48,15 @@ module tb_ALU;
         b=32'h0FF0_0FF0;
         alu_control=4'd2;
         #10;
-        if(result!==32'h00F0_00F0) begin
-            $display("AND fail,result=%h,expect 32'h00F0_00F0",result);
+        if(alu_result!==32'h00F0_00F0) begin
+            $display("AND fail,result=%h,expect 32'h00F0_00F0",alu_result);
             errors=errors+1;
         end else $display("AND PASS");
          
         alu_control=4'd3;
         #10;
-        if(result!==32'hFFF0_FFF0) begin
-            $display("OR fail,result=%h,expect 32'hFFF0_FFF0",result);
+        if(alu_result!==32'hFFF0_FFF0) begin
+            $display("OR fail,result=%h,expect 32'hFFF0_FFF0",alu_result);
             errors=errors+1;
         end else $display("OR PASS");
 
@@ -64,8 +64,8 @@ module tb_ALU;
         
         alu_control=4'd15;
         #10;
-        if(result!==32'h0) begin
-            $display("default fail,result=%h,expect 32'h0",result);
+        if(alu_result!==32'h0) begin
+            $display("default fail,result=%h,expect 32'h0",alu_result);
             errors=errors+1;
         end else $display("default PASS");
          if(zero!==1) begin
