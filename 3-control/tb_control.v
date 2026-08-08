@@ -4,7 +4,7 @@ module tb_control;
     reg [2:0] funct3;
     reg funct7_5;
 
-    wire we;
+    wire reg_write;
     wire alu_src;
     wire mem_read;
     wire mem_write;
@@ -16,7 +16,7 @@ module tb_control;
 
     ctrl u_ctrl(
         .opcode(opcode),
-        .we(we),
+        .reg_write(reg_write),
         .alu_src(alu_src),
         .mem_read(mem_read),
         .mem_write(mem_write),
@@ -36,9 +36,9 @@ module tb_control;
         begin
             opcode = op; funct3 = f3; funct7_5 = f7_5;   //dirve
             #10;                                         
-            if ({we, alu_src, mem_read, mem_write, MemtoReg, branch, imm_sel, alu_control} !== exp) begin
+            if ({reg_write, alu_src, mem_read, mem_write, MemtoReg, branch, imm_sel, alu_control} !== exp) begin
                 $display("ERROR %0s: expect %b, get %b", name, exp,
-                         {we, alu_src, mem_read, mem_write, MemtoReg, branch, imm_sel, alu_control});
+                         {reg_write, alu_src, mem_read, mem_write, MemtoReg, branch, imm_sel, alu_control});
                 errors = errors + 1;
             end
         end

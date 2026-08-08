@@ -9,7 +9,7 @@ opcode	RegWrite	ALUSrc	MemRead	MemWrite	MemtoReg	Branch	ALUOp	ImmSel
 module control(
     input  wire [6:0] opcode,
 
-    output reg we, 
+    output reg reg_write, 
     output reg alu_src,
     output reg mem_read,
     output reg mem_write,
@@ -25,7 +25,7 @@ parameter beq=7'b1100011;
 always@(*) begin
     case(opcode)
     R_type: begin
-        we=1'b1;
+        reg_write=1'b1;
         alu_src=1'b0;
         mem_read=1'b0;
         mem_write=1'b0;
@@ -35,7 +35,7 @@ always@(*) begin
         imm_sel=3'b000;
     end
     lw: begin
-        we=1'b1;
+        reg_write=1'b1;
         alu_src=1'b1;
         mem_read=1'b1;
         mem_write=1'b0;
@@ -45,7 +45,7 @@ always@(*) begin
         imm_sel=3'b000;
     end  
     sw:begin
-        we=1'b0;
+        reg_write=1'b0;
         alu_src=1'b1;
         mem_read=1'b0;
         mem_write=1'b1;
@@ -55,7 +55,7 @@ always@(*) begin
         imm_sel=3'b001;
     end
     beq:begin
-        we=1'b0;
+        reg_write=1'b0;
         alu_src=1'b0;
         mem_read=1'b0;
         mem_write=1'b0;
@@ -65,7 +65,7 @@ always@(*) begin
         imm_sel=3'b010;
     end
     default:begin
-        we=1'b0;
+        reg_write=1'b0;
         alu_src=1'b0;
         mem_read=1'b0;
         mem_write=1'b0;
@@ -108,7 +108,7 @@ module ctrl(
     input wire [2:0] funct3,
     input wire funct7_5,
 
-    output wire we,
+    output wire reg_write,
     output wire alu_src,
     output wire mem_read,
     output wire mem_write,
@@ -123,7 +123,7 @@ module ctrl(
 
     control u_control(
         .opcode(opcode),
-        .we(we),
+        .reg_write(reg_write),
         .alu_src(alu_src),
         .mem_read(mem_read),
         .mem_write(mem_write),
