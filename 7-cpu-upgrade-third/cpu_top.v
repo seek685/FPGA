@@ -51,10 +51,10 @@ module cpu_top(
     assign pc_imm=pc+imm;
 
     //pc_src MUX
-    assign next_pc=(jump==2'b10)?{alu_result[31:1],1'b0}:
-                   (jump==2'b01)?pc_imm:
-                   (pc_src==1'b1)?pc_imm:
-                                   pc_4;
+    assign next_pc=(jump==2'b10)?{alu_result[31:1],1'b0}://jalr
+                   (jump==2'b01)?pc_imm:  //jal
+                   (pc_src==1'b1)?pc_imm:  //b_type
+                                   pc_4;   //normal
 
     //alu_src MUX
     assign b=(alu_src_b==1)?imm:rdata2;
