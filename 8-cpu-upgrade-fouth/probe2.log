@@ -1,0 +1,34 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c tb_cpu_top -do "run 300ns; examine -radix hex /tb_cpu_top/dut/u_dmem/dmem(0); examine -radix hex /tb_cpu_top/dut/u_dmem/dmem(4); examine -radix hex /tb_cpu_top/dut/u_regfile/regs(2); examine -radix hex /tb_cpu_top/dut/u_regfile/regs(6); examine -radix hex /tb_cpu_top/dut/u_regfile/regs(7); examine -radix hex /tb_cpu_top/dut/instr; quit" 
+# Start time: 10:33:01 on Aug 13,2026
+# Loading work.tb_cpu_top
+# Loading work.cpu_top
+# Loading work.pc
+# Loading work.ALU
+# Loading work.ctrl
+# Loading work.control
+# Loading work.alu_decoder
+# Loading work.dmem
+# Loading work.imem
+# Loading work.regfile
+# Loading work.immgen
+# Loading work.branch_unit
+# run 300ns
+#  examine -radix hex /tb_cpu_top/dut/u_dmem/dmem(0)
+# fe5c6a78
+#  examine -radix hex /tb_cpu_top/dut/u_dmem/dmem(4)
+# 00006a78
+#  examine -radix hex /tb_cpu_top/dut/u_regfile/regs(2)
+# 00000078
+#  examine -radix hex /tb_cpu_top/dut/u_regfile/regs(6)
+# 11111111
+#  examine -radix hex /tb_cpu_top/dut/u_regfile/regs(7)
+# 11111111
+#  examine -radix hex /tb_cpu_top/dut/instr
+# xxxxxxxx
+#  quit
+# End time: 10:33:01 on Aug 13,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
