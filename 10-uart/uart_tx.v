@@ -8,6 +8,7 @@ module uart_tx#(
     input wire [7:0] tx_data,
     input wire tx_vaild,
     
+    output wire tx_busy,
     output reg txd
 
 );
@@ -19,6 +20,7 @@ module uart_tx#(
     reg [3:0] bit_cnt;
     reg [9:0] tx_shift;//{stop,data[7:0],start}
 
+    assign tx_busy=state;
     always@(posedge clk or negedge rst_n) begin
         if(rst_n==0)begin
             state<=0;
