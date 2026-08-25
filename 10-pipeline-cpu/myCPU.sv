@@ -39,6 +39,18 @@ module myCPU(
     logic [1:0]id_ex_mem_size;
     logic id_ex_load_unsigned;
     
+    logic ex_mem_valid;
+    logic [31:0] ex_mem_alu_result;
+    logic [31:0] ex_mem_store_data;//mem_wdata
+    logic [31:0] ex_mem_pc4;
+    logic [4:0] ex_mem_rd;
+    logic ex_mem_reg_write;
+    logic ex_mem_mem_read;
+    logic ex_mem_mem_write;
+    logic [1:0] ex_mem_MemtoReg;
+    logic [1:0] ex_mem_mem_size;
+    logic ex_mem_load_unsigned;
+    
     logic rst_n;
     assign rst_n = ~cpu_rst;
     //pc
@@ -85,7 +97,7 @@ module myCPU(
     assign pc_4=pc+32'd4;
 
     //pc_imm
-    assign pc_imm=pc+imm;
+    assign pc_imm=id_ex_pc+id_ex_imm;
 
     //pc_src MUX
     assign next_pc=pc_4;
@@ -95,15 +107,16 @@ module myCPU(
     //                               pc_4;   //normal
 
     //alu_src MUX
-    assign b=(alu_src_b==1)?imm:rdata2;
-    assign a = (alu_src_a==2'b01) ? pc:
-               (alu_src_a==2'b10) ? 32'd0:
-                                    rdata1;//case00 and case 11 as default
+    //running while ex
+    assign b=(id_ex_alu_src_b==1)?id_ex_imm:id_ex_rs2_value;
+    assign a = (id_ex_alu_src_a==2'b01) ? id_ex_pc:
+               (id_ex_alu_src_a==2'b10) ? 32'd0:
+                                    id_ex_rs1_value;//case00 and case 11 as default
 
-    assign perip_addr  = alu_result;
-    assign perip_wdata = rdata2;
-    assign perip_wen   = 1'b0;//mem_write;
-    assign perip_mask  = instr[13:12];    // funct3 low2
+    assign perip_addr  = ex_mem_alu_result;
+    assign perip_wdata = ex_mem_store_data;
+    assign perip_wen   = ex_mem_valid&&ex_mem_mem_write;
+    assign perip_mask  = ex_mem_mem_size;    // funct3 low2
 
     logic [31:0] read_data;
     always_comb begin
@@ -231,6 +244,36 @@ module myCPU(
         .out_jump(id_ex_jump),
         .out_mem_size(id_ex_mem_size),
         .out_load_unsigned(id_ex_load_unsigned)
+    );
+    ex_mem u_ex_mem(
+        .clk(cpu_clk),
+        .rst_n(rst_n),
+        .flush(1'b0),
+        .bubble(1'b0),
+        .in_valid(id_ex_valid),
+        .in_alu_result(alu_result),
+        .in_store_data(id_ex_rs2_value),
+        .in_pc4(id_ex_pc4),
+        .in_rd(id_ex_rd),
+        .in_reg_write(id_ex_reg_write),
+        .in_mem_read(id_ex_mem_read),
+        .in_mem_write(id_ex_mem_write),
+        .in_MemtoReg(id_ex_MemtoReg),
+        .in_mem_size(id_ex_mem_size),
+        .in_load_unsigned(id_ex_load_unsigned),
+
+        .out_valid(ex_mem_valid),
+        .out_alu_result(ex_mem_alu_result),
+        .out_store_data(ex_mem_store_data),
+        .out_pc4(ex_mem_pc4),
+        .out_rd(ex_mem_rd),
+        .out_reg_write(ex_mem_reg_write),
+        .out_mem_read(ex_mem_mem_read),
+        .out_mem_write(ex_mem_mem_write),
+        .out_MemtoReg(ex_mem_MemtoReg),
+        .out_mem_size(ex_mem_mem_size),
+        .out_load_unsigned(ex_mem_load_unsigned)
+
     );
 
 endmodule
