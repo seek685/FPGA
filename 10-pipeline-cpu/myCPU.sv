@@ -16,6 +16,10 @@ module myCPU(
     logic [31:0] if_id_pc4;
     logic [31:0] if_id_instr;
 
+    logic id_load_unsigned;
+    assign id_load_unsigned=
+    ((if_id_instr[6:0]==7'b0000011)&&(if_id_instr[14:12]==3'b100 || if_id_instr[14:12]==3'b101))?1:0;
+
     logic id_ex_valid;
     logic [31:0] id_ex_pc;
     logic [31:0] id_ex_pc4;
@@ -51,6 +55,14 @@ module myCPU(
     logic [1:0] ex_mem_mem_size;
     logic ex_mem_load_unsigned;
     
+    logic mem_wb_valid;
+    logic [31:0] mem_wb_read_data;
+    logic [31:0] mem_wb_alu_result;
+    logic [31:0] mem_wb_pc4;
+    logic [4:0] mem_wb_rd;
+    logic mem_wb_reg_write;
+    logic [1:0] mem_wb_MemtoReg;
+
     logic rst_n;
     assign rst_n = ~cpu_rst;
     //pc
@@ -92,20 +104,31 @@ module myCPU(
 
     //AND
     logic pc_src;
-    assign pc_src=branch&branch_1;
+    assign pc_src=id_ex_branch&branch_1;
     //pc_4
     assign pc_4=pc+32'd4;
 
     //pc_imm
     assign pc_imm=id_ex_pc+id_ex_imm;
 
-    //pc_src MUX
-    assign next_pc=pc_4;
-    //(jump==2'b10)?{alu_result[31:1],1'b0}://jalr
-    //               (jump==2'b01)?pc_imm:  //jal
-    //               (pc_src==1'b1)?pc_imm:  //b_type
-    //                               pc_4;   //normal
+    //pc_src MUX                         //jalr
+  // assign next_pc=(id_ex_jump==2'b10)?{alu_result[31:1],1'b0}:
+  //             (id_ex_jump==2'b01)?pc_imm:  //jal
+  //             (pc_src==1'b1)?pc_imm:  //b_type
+  //                            pc_4;   //normal
+    assign flush=(id_ex_valid==1)&&(id_ex_jump!=2'b00 || pc_src==1'b1);
 
+    always_comb begin
+        next_pc=pc_4;
+        if(id_ex_valid==1) begin  
+            case(id_ex_jump)
+                2'b10:next_pc={alu_result[31:1],1'b0};
+                2'b01:next_pc=pc_imm;
+                default:next_pc=(pc_src==1'b1)?pc_imm:pc_4;
+            endcase
+        end
+    end
+                            
     //alu_src MUX
     //running while ex
     assign b=(id_ex_alu_src_b==1)?id_ex_imm:id_ex_rs2_value;
@@ -118,19 +141,24 @@ module myCPU(
     assign perip_wen   = ex_mem_valid&&ex_mem_mem_write;
     assign perip_mask  = ex_mem_mem_size;    // funct3 low2
 
+
     logic [31:0] read_data;
-    always_comb begin
-        case (instr[14:12])
-            3'b000: read_data = {{24{perip_rdata[7]}}, perip_rdata[7:0]};
-            3'b001: read_data = {{16{perip_rdata[15]}}, perip_rdata[15:0]};
-            default: read_data = perip_rdata; // LW, LBU, LHU
+    always_comb begin //00-byte  01-halfword  10-word
+        case (ex_mem_mem_size)
+            2'b00: read_data =(ex_mem_load_unsigned==0)? 
+            {{24{perip_rdata[7]}}, perip_rdata[7:0]}
+            :{24'd0, perip_rdata[7:0]};
+            2'b01: read_data =(ex_mem_load_unsigned==0)?
+            {{16{perip_rdata[15]}}, perip_rdata[15:0]}
+            :{16'd0, perip_rdata[15:0]};
+            default: read_data = perip_rdata; 
         endcase
     end
     //MemtoReg
     logic [31:0] write_back;
-    assign write_back=(MemtoReg==2'b01)?read_data:
-                      (MemtoReg==2'b10)?pc_4:
-                                        alu_result;//case 00 and case 11 as default
+    assign write_back=(mem_wb_MemtoReg==2'b01)?mem_wb_read_data:
+                      (mem_wb_MemtoReg==2'b10)?mem_wb_pc4:
+                                        mem_wb_alu_result;//case 00 and case 11 as default
 
     pc u_pc(
         .clk(cpu_clk),
@@ -162,8 +190,8 @@ module myCPU(
     regfile u_regfile(
         .raddr1(if_id_instr[19:15]),
         .raddr2(if_id_instr[24:20]),
-        .waddr(if_id_instr[11:7]),
-        .we(1'b0),
+        .waddr(mem_wb_rd),
+        .we(mem_wb_valid&&mem_wb_reg_write),
         .clk(cpu_clk),
         .wdata(write_back),
         .rdata1(rdata1),
@@ -175,15 +203,15 @@ module myCPU(
         .imm(imm)
     );
     branch_unit u_branch_unit(
-        .rdata1(rdata1),
-        .rdata2(rdata2),
-        .funct3(if_id_instr[14:12]),
+        .rdata1(id_ex_rs1_value),
+        .rdata2(id_ex_rs2_value),
+        .funct3(id_ex_funct3),
         .branch_1(branch_1)
     );
     if_id u_if_id(
         .clk(cpu_clk),
         .rst(rst_n),
-        .flush(1'b0),
+        .flush(flush),
         .stall(1'b0),
         .in_valid(1'b1),
         .in_pc(pc),
@@ -197,7 +225,7 @@ module myCPU(
     id_ex u_id_ex(
         .clk(cpu_clk),
         .rst_n(rst_n),
-        .flush(1'b0),
+        .flush(flush),
         .bubble(1'b0),
         .in_valid(if_id_valid),
         .in_pc(if_id_pc),
@@ -219,8 +247,8 @@ module myCPU(
         .in_MemtoReg(MemtoReg),
         .in_branch(branch),
         .in_jump(jump),
-        .in_mem_size(2'b00),
-        .in_load_unsigned(1'b0),
+        .in_mem_size(if_id_instr[13:12]),//funct3[1:0]
+        .in_load_unsigned(id_load_unsigned),
 
         .out_valid(id_ex_valid),
         .out_pc(id_ex_pc),
@@ -274,6 +302,24 @@ module myCPU(
         .out_mem_size(ex_mem_mem_size),
         .out_load_unsigned(ex_mem_load_unsigned)
 
+    );
+    mem_wb u_mem_wb(
+        .clk(cpu_clk),
+        .rst_n(rst_n),
+        .in_valid(ex_mem_valid),
+        .in_read_data(read_data),
+        .in_alu_result(ex_mem_alu_result),
+        .in_pc4(ex_mem_pc4),
+        .in_rd(ex_mem_rd),
+        .in_reg_write(ex_mem_reg_write),
+        .in_MemtoReg(ex_mem_MemtoReg),
+        .out_valid(mem_wb_valid),
+        .out_read_data(mem_wb_read_data),
+        .out_alu_result(mem_wb_alu_result),
+        .out_pc4(mem_wb_pc4),
+        .out_rd(mem_wb_rd),
+        .out_reg_write(mem_wb_reg_write),
+        .out_MemtoReg(mem_wb_MemtoReg)
     );
 
 endmodule
