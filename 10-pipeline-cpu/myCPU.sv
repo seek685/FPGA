@@ -63,6 +63,9 @@ module myCPU(
     logic mem_wb_reg_write;
     logic [1:0] mem_wb_MemtoReg;
 
+
+    logic pc_stall;
+    assign pc_stall=stall&&!flush;
     logic rst_n;
     assign rst_n = ~cpu_rst;
     //pc
@@ -167,6 +170,7 @@ module myCPU(
         .clk(cpu_clk),
         .rst_n(rst_n),
         .next_pc(next_pc),
+        .stall(pc_stall),
         .pc(pc)
     );
     alu u_alu(
@@ -215,7 +219,7 @@ module myCPU(
         .clk(cpu_clk),
         .rst(rst_n),
         .flush(flush),
-        .stall(1'b0),
+        .stall(stall),
         .in_valid(1'b1),
         .in_pc(pc),
         .in_pc4(pc_4),
@@ -229,7 +233,7 @@ module myCPU(
         .clk(cpu_clk),
         .rst_n(rst_n),
         .flush(flush),
-        .bubble(1'b0),
+        .bubble(stall),
         .in_valid(if_id_valid),
         .in_pc(if_id_pc),
         .in_pc4(if_id_pc4),
@@ -343,5 +347,14 @@ module myCPU(
         .forwarded_rs1_value(forwarded_rs1_value),
         .forwarded_rs2_value(forwarded_rs2_value)
     );
-
+    hazard_detection u_hazard_dection(
+        .id_ex_valid(id_ex_valid),
+        .id_ex_mem_read(id_ex_mem_read),
+        .id_ex_rd(id_ex_rd),
+        .if_id_valid(if_id_valid),
+        .if_id_opcode(if_id_instr[6:0]),
+        .if_id_rs1(if_id_instr[19:15]),
+        .if_id_rs2(if_id_instr[24:20]),
+        .load_use_stall(stall)
+    );
 endmodule
