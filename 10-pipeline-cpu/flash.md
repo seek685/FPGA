@@ -52,3 +52,4 @@ makefile 一条龙：gcc -march=rv32i_zifencei（带 zifencei 否则 fence.i 编
 周期数比指令数多是正常的：bypass 测试宏内部有 bne 回跳循环会重复执行
 run_regress.sh 一键回归，改 RTL 后必须先 vlog 再跑，否则测的是旧电路
 40/42：fence_i 超时=哈佛结构跑不了自修改代码（sw 只写 dmem，imem 不变）；ma_data 挂=要 CSR 异常处理非对齐访存，高阶任务再补
+

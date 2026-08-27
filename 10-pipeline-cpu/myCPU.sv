@@ -88,6 +88,9 @@ module myCPU(
     logic [2:0] imm_sel;
     logic [3:0] alu_control;
 
+    logic [31:0] forwarded_rs1_value;
+    logic [31:0] forwarded_rs2_value;
+
     assign irom_addr=pc;
     logic [31:0] instr;
     assign instr = irom_data;
@@ -131,10 +134,10 @@ module myCPU(
                             
     //alu_src MUX
     //running while ex
-    assign b=(id_ex_alu_src_b==1)?id_ex_imm:id_ex_rs2_value;
+    assign b=(id_ex_alu_src_b==1)?id_ex_imm:forwarded_rs2_value;
     assign a = (id_ex_alu_src_a==2'b01) ? id_ex_pc:
                (id_ex_alu_src_a==2'b10) ? 32'd0:
-                                    id_ex_rs1_value;//case00 and case 11 as default
+                                    forwarded_rs1_value;//case00 and case 11 as default
 
     assign perip_addr  = ex_mem_alu_result;
     assign perip_wdata = ex_mem_store_data;
@@ -203,8 +206,8 @@ module myCPU(
         .imm(imm)
     );
     branch_unit u_branch_unit(
-        .rdata1(id_ex_rs1_value),
-        .rdata2(id_ex_rs2_value),
+        .rdata1(forwarded_rs1_value),
+        .rdata2(forwarded_rs2_value),
         .funct3(id_ex_funct3),
         .branch_1(branch_1)
     );
@@ -280,7 +283,7 @@ module myCPU(
         .bubble(1'b0),
         .in_valid(id_ex_valid),
         .in_alu_result(alu_result),
-        .in_store_data(id_ex_rs2_value),
+        .in_store_data(forwarded_rs2_value),
         .in_pc4(id_ex_pc4),
         .in_rd(id_ex_rd),
         .in_reg_write(id_ex_reg_write),
@@ -320,6 +323,25 @@ module myCPU(
         .out_rd(mem_wb_rd),
         .out_reg_write(mem_wb_reg_write),
         .out_MemtoReg(mem_wb_MemtoReg)
+    );
+    forwarding u_forwarding(
+        .id_ex_rs1(id_ex_rs1),
+        .id_ex_rs2(id_ex_rs2),
+        .id_ex_rs1_value(id_ex_rs1_value),
+        .id_ex_rs2_value(id_ex_rs2_value),
+        .ex_mem_valid(ex_mem_valid),
+        .ex_mem_reg_write(ex_mem_reg_write),
+        .ex_mem_mem_read(ex_mem_mem_read),
+        .ex_mem_rd(ex_mem_rd),
+        .ex_mem_pc4(ex_mem_pc4),
+        .ex_mem_MemtoReg(ex_mem_MemtoReg),
+        .ex_mem_alu_result(ex_mem_alu_result),
+        .mem_wb_valid(mem_wb_valid),
+        .mem_wb_reg_write(mem_wb_reg_write),
+        .mem_wb_rd(mem_wb_rd),
+        .mem_wb_write_data(write_back),
+        .forwarded_rs1_value(forwarded_rs1_value),
+        .forwarded_rs2_value(forwarded_rs2_value)
     );
 
 endmodule
