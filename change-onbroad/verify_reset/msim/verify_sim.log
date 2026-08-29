@@ -1,0 +1,42 @@
+# vsim -c -l verify_sim.log -do "run -all; quit -f" tb_student_actual 
+# Start time: 11:02:47 on Aug 29,2026
+# Loading sv_std.std
+# Loading work.tb_student_actual
+# Loading work.student_top
+# Loading work.myCPU
+# Loading work.pc
+# Loading work.alu
+# Loading work.ctrl
+# Loading work.control
+# Loading work.alu_decoder
+# Loading work.regfile
+# Loading work.immgen
+# Loading work.branch_unit
+# Loading work.if_id
+# Loading work.id_ex
+# Loading work.ex_mem
+# Loading work.mem_wb
+# Loading work.forwarding
+# Loading work.hazard_detection
+# Loading work.IROM
+# Loading work.dist_mem_gen_v8_0_17
+# Loading work.perip_bridge
+# Loading work.display_seg
+# Loading work.seg7
+# Loading work.dram_driver
+# Loading work.DRAM
+# Loading work.counter
+# run -all
+# WARNING: This core is supplied with a behavioral model. To model cycle-accurate behavior you must run timing simulation.
+# ** Warning: (vsim-7) Failed to open readmem file "IROM.mif" in read mode.
+# No such file or directory. (errno = ENOENT)    : D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.gen/sources_1/ip/IROM/simulation/dist_mem_gen_v8_0.v(279)
+#    Time: 0 ps  Iteration: 0  Instance: /tb_student_actual/dut/Mem_IROM/inst
+# WARNING: This core is supplied with a behavioral model. To model cycle-accurate behavior you must run timing simulation.
+# ** Warning: (vsim-7) Failed to open readmem file "DRAM.mif" in read mode.
+# No such file or directory. (errno = ENOENT)    : D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.gen/sources_1/ip/IROM/simulation/dist_mem_gen_v8_0.v(279)
+#    Time: 0 ps  Iteration: 0  Instance: /tb_student_actual/dut/bridge_inst/dram_driver_inst/Mem_DRAM/inst
+# FINAL led=00000000 seg=4fd3f4fd3f pc=800c34fc count=00000000
+# ** Note: $finish    : D:/0_FPGA/change-onbroad/verify_reset/tb_student_actual.sv(41)
+#    Time: 2000035 ns  Iteration: 1  Instance: /tb_student_actual
+# End time: 11:02:52 on Aug 29,2026, Elapsed time: 0:00:05
+# Errors: 0, Warnings: 2

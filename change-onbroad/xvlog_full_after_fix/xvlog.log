@@ -1,0 +1,46 @@
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/alu.sv" into library work
+INFO: [VRFC 10-311] analyzing module alu
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/branch_unit.sv" into library work
+INFO: [VRFC 10-311] analyzing module branch_unit
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/control.sv" into library work
+INFO: [VRFC 10-311] analyzing module control
+INFO: [VRFC 10-311] analyzing module alu_decoder
+INFO: [VRFC 10-311] analyzing module ctrl
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/ex_mem.sv" into library work
+INFO: [VRFC 10-311] analyzing module ex_mem
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/forwarding.sv" into library work
+INFO: [VRFC 10-311] analyzing module forwarding
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/hazard_detection.sv" into library work
+INFO: [VRFC 10-311] analyzing module hazard_detection
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/id_ex.sv" into library work
+INFO: [VRFC 10-311] analyzing module id_ex
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/if_id.sv" into library work
+INFO: [VRFC 10-311] analyzing module if_id
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/immgen.sv" into library work
+INFO: [VRFC 10-311] analyzing module immgen
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/mem_wb.sv" into library work
+INFO: [VRFC 10-311] analyzing module mem_wb
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/myCPU.sv" into library work
+INFO: [VRFC 10-311] analyzing module myCPU
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/pc.sv" into library work
+INFO: [VRFC 10-311] analyzing module pc
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/0_FPGA/10-pipeline-cpu/regfile.sv" into library work
+INFO: [VRFC 10-311] analyzing module regfile
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.gen/sources_1/ip/IROM/simulation/dist_mem_gen_v8_0.v" into library work
+INFO: [VRFC 10-311] analyzing module dist_mem_gen_v8_0_17
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.gen/sources_1/ip/IROM/sim/IROM.v" into library work
+INFO: [VRFC 10-311] analyzing module IROM
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.gen/sources_1/ip/DRAM/sim/DRAM.v" into library work
+INFO: [VRFC 10-311] analyzing module DRAM
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.srcs/sources_1/new/seg7.sv" into library work
+INFO: [VRFC 10-311] analyzing module seg7
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.srcs/sources_1/new/display_seg.sv" into library work
+INFO: [VRFC 10-311] analyzing module display_seg
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.srcs/sources_1/new/dram_driver.sv" into library work
+INFO: [VRFC 10-311] analyzing module dram_driver
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.srcs/sources_1/new/counter.sv" into library work
+INFO: [VRFC 10-311] analyzing module counter
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.srcs/sources_1/new/perip_bridge.sv" into library work
+INFO: [VRFC 10-311] analyzing module perip_bridge
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "D:/_small_eyes/JYD2025_Contest-rv32i/digital_twin.srcs/sources_1/new/student_top.sv" into library work
+INFO: [VRFC 10-311] analyzing module student_top

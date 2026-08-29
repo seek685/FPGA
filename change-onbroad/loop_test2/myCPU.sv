@@ -200,7 +200,6 @@ module myCPU(
         .waddr(mem_wb_rd),
         .we(mem_wb_valid&&mem_wb_reg_write),
         .clk(cpu_clk),
-        .rst_n(rst_n),
         .wdata(write_back),
         .rdata1(rdata1),
         .rdata2(rdata2)

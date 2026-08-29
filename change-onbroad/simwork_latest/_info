@@ -1,0 +1,663 @@
+m255
+K4
+z2
+!s11f vlog 2020.1 2020.02, Feb 28 2020
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dD:/0_FPGA/change-onbroad
+valu
+Z1 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
+Z2 !s110 1787973907
+!i10b 1
+!s100 ;Q_0RdIh7fngd0e6b@cjY3
+Z3 !s11b Dg1SIo80bB@j0V0VzS_@n1
+IU4>JbAUKCa?K>f_3SCm]I3
+Z4 VDg1SIo80bB@j0V0VzS_@n1
+S1
+R0
+w1787558885
+8D:\0_FPGA\10-pipeline-cpu\alu.sv
+FD:\0_FPGA\10-pipeline-cpu\alu.sv
+!i122 0
+L0 1 24
+Z5 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z6 !s108 1787973907.000000
+Z7 !s107 D:\0_FPGA\10-pipeline-cpu\tb_student_actual.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\student_top.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\perip_bridge.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\counter.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\dram_driver.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\display_seg.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\seg7.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\DRAM\sim\DRAM.v|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\IROM\sim\IROM.v|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\IROM\simulation\dist_mem_gen_v8_0.v|D:\0_FPGA\10-pipeline-cpu\regfile.sv|D:\0_FPGA\10-pipeline-cpu\pc.sv|D:\0_FPGA\10-pipeline-cpu\myCPU.sv|D:\0_FPGA\10-pipeline-cpu\mem_wb.sv|D:\0_FPGA\10-pipeline-cpu\immgen.sv|D:\0_FPGA\10-pipeline-cpu\if_id.sv|D:\0_FPGA\10-pipeline-cpu\id_ex.sv|D:\0_FPGA\10-pipeline-cpu\hazard_detection.sv|D:\0_FPGA\10-pipeline-cpu\forwarding.sv|D:\0_FPGA\10-pipeline-cpu\ex_mem.sv|D:\0_FPGA\10-pipeline-cpu\control.sv|D:\0_FPGA\10-pipeline-cpu\branch_unit.sv|D:\0_FPGA\10-pipeline-cpu\alu.sv|
+Z8 !s90 -sv|-work|D:\0_FPGA\change-onbroad\simwork_latest|D:\0_FPGA\10-pipeline-cpu\alu.sv|D:\0_FPGA\10-pipeline-cpu\branch_unit.sv|D:\0_FPGA\10-pipeline-cpu\control.sv|D:\0_FPGA\10-pipeline-cpu\ex_mem.sv|D:\0_FPGA\10-pipeline-cpu\forwarding.sv|D:\0_FPGA\10-pipeline-cpu\hazard_detection.sv|D:\0_FPGA\10-pipeline-cpu\id_ex.sv|D:\0_FPGA\10-pipeline-cpu\if_id.sv|D:\0_FPGA\10-pipeline-cpu\immgen.sv|D:\0_FPGA\10-pipeline-cpu\mem_wb.sv|D:\0_FPGA\10-pipeline-cpu\myCPU.sv|D:\0_FPGA\10-pipeline-cpu\pc.sv|D:\0_FPGA\10-pipeline-cpu\regfile.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\IROM\simulation\dist_mem_gen_v8_0.v|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\IROM\sim\IROM.v|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\DRAM\sim\DRAM.v|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\seg7.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\display_seg.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\dram_driver.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\counter.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\perip_bridge.sv|D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\student_top.sv|D:\0_FPGA\10-pipeline-cpu\tb_student_actual.sv|
+!i113 1
+Z9 o-sv -work {D:\0_FPGA\change-onbroad\simwork_latest}
+Z10 tCvgOpt 0
+valu_decoder
+R1
+R2
+!i10b 1
+!s100 O?VDm`^lE^4BBcm[b=?^k2
+R3
+I@Tlz5I8h6ge3M9oaV7@l51
+R4
+S1
+R0
+Z11 w1787473983
+Z12 8D:\0_FPGA\10-pipeline-cpu\control.sv
+Z13 FD:\0_FPGA\10-pipeline-cpu\control.sv
+!i122 0
+L0 101 42
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vbranch_unit
+R1
+R2
+!i10b 1
+!s100 6?dU79Rg6b5IOKka[WiR[2
+R3
+IgiZTLSJnAI6_OVc7C]Vkz0
+R4
+S1
+R0
+w1787472835
+8D:\0_FPGA\10-pipeline-cpu\branch_unit.sv
+FD:\0_FPGA\10-pipeline-cpu\branch_unit.sv
+!i122 0
+L0 1 18
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vcontrol
+R1
+R2
+!i10b 1
+!s100 GCC<Di7K9joV9M1U^;^jH3
+R3
+ICmZ2J_dNHa43YQU?l639h3
+R4
+S1
+R0
+R11
+R12
+R13
+!i122 0
+L0 7 93
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vcounter
+R1
+R2
+!i10b 1
+!s100 28c=DTQb`Xe0KBLHf@7b_3
+R3
+IXD7Af;AF9e72FUdG>m3>20
+R4
+S1
+R0
+w1775563012
+8D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\counter.sv
+FD:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\counter.sv
+!i122 0
+L0 23 76
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vctrl
+R1
+R2
+!i10b 1
+!s100 LCdl@P@OK<z;PMPneg@^A3
+R3
+IJ_9jcd?<^R06gD@ecDJ]U1
+R4
+S1
+R0
+R11
+R12
+R13
+!i122 0
+L0 144 31
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vdisplay_seg
+R1
+R2
+!i10b 1
+!s100 ]_ALZbP;^1ZBFLF^_5Dn]1
+R3
+I:`[]N3LZmC?:ZH4?f:HG13
+R4
+S1
+R0
+w1745391810
+8D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\display_seg.sv
+FD:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\display_seg.sv
+!i122 0
+L0 23 45
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vdist_mem_gen_v8_0_17
+R1
+R2
+!i10b 1
+!s100 4<BG]SIc4Fl_K:=QIK7MP2
+R3
+I2kTLhL8i2oNYelUhMF[PG1
+R4
+S1
+R0
+Z14 w1787893397
+8D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\IROM\simulation\dist_mem_gen_v8_0.v
+FD:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\IROM\simulation\dist_mem_gen_v8_0.v
+!i122 0
+L0 123 495
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vDRAM
+R1
+R2
+!i10b 1
+!s100 RnRA01]Z07?<26X5[l@fE2
+R3
+I6bU:1?UT7bMIGCdnBHe@[3
+R4
+S1
+R0
+w1787894166
+8D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\DRAM\sim\DRAM.v
+FD:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\DRAM\sim\DRAM.v
+!i122 0
+L0 56 67
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+n@d@r@a@m
+vdram_driver
+R1
+R2
+!i10b 1
+!s100 :V=L;eLNPL3B4KmY1o9]D2
+R3
+I^o7>hVkSeh<1o:_DI11gA0
+R4
+S1
+R0
+w1745726730
+8D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\dram_driver.sv
+FD:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\dram_driver.sv
+!i122 0
+L0 23 68
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vex_mem
+R1
+R2
+!i10b 1
+!s100 AkSfKlz`IDQCOfH[DG^]D3
+R3
+Ibo>`GQ>P`H60Xf6]d:kWX1
+R4
+S1
+R0
+w1787659418
+8D:\0_FPGA\10-pipeline-cpu\ex_mem.sv
+FD:\0_FPGA\10-pipeline-cpu\ex_mem.sv
+!i122 0
+L0 1 88
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vforwarding
+R1
+R2
+!i10b 1
+!s100 1PhPAmgmY8N0lMW2MoUYa2
+R3
+IO98g>^Pe?N56XI7g4T1C10
+R4
+S1
+R0
+w1787796879
+8D:\0_FPGA\10-pipeline-cpu\forwarding.sv
+FD:\0_FPGA\10-pipeline-cpu\forwarding.sv
+!i122 0
+L0 1 47
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vhazard_detection
+R1
+R2
+!i10b 1
+!s100 _aZB`LkMF>zzFGI8:0MSV3
+R3
+I57GNB7j2k3Afj7JCNUC`_1
+R4
+S1
+R0
+w1787817260
+8D:\0_FPGA\10-pipeline-cpu\hazard_detection.sv
+FD:\0_FPGA\10-pipeline-cpu\hazard_detection.sv
+!i122 0
+L0 1 59
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vid_ex
+R1
+R2
+!i10b 1
+!s100 lz?WMRf4@VOZHoEocbdLL3
+R3
+IC4Nf1lTQgdI6@9VGbji1z0
+R4
+S1
+R0
+w1787643571
+8D:\0_FPGA\10-pipeline-cpu\id_ex.sv
+FD:\0_FPGA\10-pipeline-cpu\id_ex.sv
+!i122 0
+L0 1 153
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vif_id
+R1
+R2
+!i10b 1
+!s100 HVW[EcXXIm7L?<TX<=g9@1
+R3
+IanWQKZoXVe><;JE=RL^0^3
+R4
+S1
+R0
+w1787644127
+8D:\0_FPGA\10-pipeline-cpu\if_id.sv
+FD:\0_FPGA\10-pipeline-cpu\if_id.sv
+!i122 0
+Z15 L0 1 41
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vimmgen
+R1
+R2
+!i10b 1
+!s100 OlJIjPjRKjjgC>M6oBfdV0
+R3
+IeAAN1ej3[>E<9YEVEk^8h1
+R4
+S1
+R0
+w1787472061
+8D:\0_FPGA\10-pipeline-cpu\immgen.sv
+FD:\0_FPGA\10-pipeline-cpu\immgen.sv
+!i122 0
+L0 1 23
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vIROM
+R1
+R2
+!i10b 1
+!s100 5_mH7SKagCkWI<oO@T:gJ3
+R3
+IY>4K:icNF8zUPcfRkzI673
+R4
+S1
+R0
+R14
+8D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\IROM\sim\IROM.v
+FD:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.gen\sources_1\ip\IROM\sim\IROM.v
+!i122 0
+L0 56 61
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+n@i@r@o@m
+vmem_wb
+R1
+R2
+!i10b 1
+!s100 LMQ]52_:Hk<;k2=:oW<=J2
+R3
+I?7z280FRl3oCO4>`NTSGV0
+R4
+S1
+R0
+w1787712875
+8D:\0_FPGA\10-pipeline-cpu\mem_wb.sv
+FD:\0_FPGA\10-pipeline-cpu\mem_wb.sv
+!i122 0
+R15
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vmyCPU
+R1
+R2
+!i10b 1
+!s100 EYja2VSDW]UJkn`lBG3<c0
+R3
+IN;_l?1TEG^aMLbMHN1gaB0
+R4
+S1
+R0
+Z16 w1787973694
+8D:\0_FPGA\10-pipeline-cpu\myCPU.sv
+FD:\0_FPGA\10-pipeline-cpu\myCPU.sv
+!i122 0
+L0 1 361
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+nmy@c@p@u
+vpc
+R1
+R2
+!i10b 1
+!s100 g:]8eM8zhjdG2<NYF0[hd3
+R3
+Igj2MHI@_H@6Xe0OmlciOB2
+R4
+S1
+R0
+w1787827722
+8D:\0_FPGA\10-pipeline-cpu\pc.sv
+FD:\0_FPGA\10-pipeline-cpu\pc.sv
+!i122 0
+L0 1 17
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vperip_bridge
+R1
+R2
+!i10b 1
+!s100 ]0VG=nCmbn`LKL2zZd:=T2
+R3
+IDK`Te?=1_O0Ni4@41D@ch1
+R4
+S1
+R0
+w1775556358
+8D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\perip_bridge.sv
+FD:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\perip_bridge.sv
+!i122 0
+L0 22 118
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vregfile
+R1
+R2
+!i10b 1
+!s100 N;OkbcUeYOBMGRz>;>g0=3
+R3
+Ib@R=g`R^BC:FQ^>nWVlI=3
+R4
+S1
+R0
+R16
+8D:\0_FPGA\10-pipeline-cpu\regfile.sv
+FD:\0_FPGA\10-pipeline-cpu\regfile.sv
+!i122 0
+L0 1 45
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vseg7
+R1
+R2
+!i10b 1
+!s100 4c=0K8PzD=J__Ug[;UzCo1
+R3
+IjkO4`2bZ4l>k49hJGmUd[2
+R4
+S1
+R0
+w1744944208
+8D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\seg7.sv
+FD:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\seg7.sv
+!i122 0
+L0 23 28
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vstudent_top
+R1
+R2
+!i10b 1
+!s100 3_Fl7>BWZbJ`Oh6UjMJN;1
+R3
+IPo5fo6IV]^lTNiH^Kd[Af0
+R4
+S1
+R0
+w1745632752
+8D:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\student_top.sv
+FD:\_small_eyes\JYD2025_Contest-rv32i\digital_twin.srcs\sources_1\new\student_top.sv
+!i122 0
+L0 23 66
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
+vtb_pipeline_trace
+R1
+!s110 1787974022
+!i10b 1
+!s100 :R56=Uen56bKcGNLV534E0
+R3
+I?lCNKAd?PI2=TOMndnWQT2
+R4
+S1
+dD:/0_FPGA/change-onbroad/simwork_latest
+w1787905864
+8D:\0_FPGA\10-pipeline-cpu\tb_pipeline_trace.sv
+FD:\0_FPGA\10-pipeline-cpu\tb_pipeline_trace.sv
+!i122 1
+L0 3 44
+R5
+r1
+!s85 0
+31
+!s108 1787974022.000000
+!s107 D:\0_FPGA\10-pipeline-cpu\tb_pipeline_trace.sv|
+!s90 -sv|-work|D:\0_FPGA\change-onbroad\simwork_latest|D:\0_FPGA\10-pipeline-cpu\tb_pipeline_trace.sv|
+!i113 1
+R9
+R10
+vtb_student_actual
+R1
+R2
+!i10b 1
+!s100 cH`5AM6lh6nh=;mHU;2?o2
+R3
+I@SlW^FOd7;@ndF^VObBZB2
+R4
+S1
+R0
+w1787963330
+8D:\0_FPGA\10-pipeline-cpu\tb_student_actual.sv
+FD:\0_FPGA\10-pipeline-cpu\tb_student_actual.sv
+!i122 0
+L0 3 41
+R5
+r1
+!s85 0
+31
+R6
+R7
+R8
+!i113 1
+R9
+R10
