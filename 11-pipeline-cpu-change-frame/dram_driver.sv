@@ -32,7 +32,6 @@ module dram_driver(
     //a as wirte   b as read
     logic [15:0] addra;
     logic [15:0] addrb;
-    logic [15:0] bram_addr;
     logic [3:0]  bram_we;
     logic [31:0] bram_din;
     logic [31:0] bram_dout;
@@ -51,7 +50,7 @@ module dram_driver(
         .enb(bram_ren),
         .addra(addra),
         .addrb(addrb),
-        .wea(bram_wen?bram_we:0000),
+        .wea(bram_wen?bram_we:4'b0000),
         .doutb(bram_dout),
         .dina(bram_din)
       
