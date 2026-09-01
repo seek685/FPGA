@@ -21,6 +21,7 @@
 
 
 module dram_driver(
+    input logic rst,
     input logic clk,
     input logic [17:0]perip_addr,//BRAM'low address 0x00000-0x3FFFF
     input logic [31:0]perip_wdata,
@@ -56,7 +57,11 @@ module dram_driver(
       
     );
     always_ff@(posedge clk)begin
-        if(bram_ren)begin
+        if(rst)begin
+            read_offset_q<=2'd0;
+            read_mask_q<=2'd0;
+        end
+        else if(bram_ren)begin
             read_offset_q<=perip_addr[1:0];
             read_mask_q<=perip_mask;
         end
