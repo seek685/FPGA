@@ -45,9 +45,9 @@ module student_top#(
     logic [31:0] perip_addr;
     logic perip_wen;
     logic [1:0] perip_mask;
-
+    logic [31:0] perip_rdata;
     // 16KB = 2^12 * 32bit
-    assign inst_addr =(pc-0x8000_0000)>>2;//pc[13:2]
+    assign inst_addr =(pc-32'h8000_0000)>>2;//pc[13:2]
 
     myCPU Core_cpu (
         .cpu_rst            (w_clk_rst),
@@ -58,7 +58,7 @@ module student_top#(
         .irom_data          (instruction),   
 
         // Interface to DRAM & periphera
-        .perip_raddr         (perip_raddr),     
+        .perip_addr         (perip_addr),     
         .perip_wen          (perip_wen),     
         .perip_mask         (perip_mask),   
         .perip_wdata        (perip_wdata),    
@@ -74,7 +74,7 @@ module student_top#(
         .clk				(w_cpu_clk),
         .cnt_clk            (w_clk_50Mhz),
         .rst                (w_clk_rst),
-        .perip_addr			(perip_waddr),
+        .perip_addr			(perip_addr),
         .perip_wdata		(perip_wdata),
         .perip_wen			(perip_wen),
         .perip_mask			(perip_mask),

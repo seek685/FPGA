@@ -3,6 +3,7 @@ module myCPU(
     input logic cpu_rst,
     output logic[31:0] irom_addr,
     input logic[31:0] irom_data,
+
     output logic[31:0] perip_addr,
     output logic perip_wen,
     output logic [1:0] perip_mask,
@@ -142,10 +143,10 @@ module myCPU(
                (id_ex_alu_src_a==2'b10) ? 32'd0:
                                     forwarded_rs1_value;//case00 and case 11 as default
 
-    assign perip_addr  = ex_mem_alu_result;
-    assign perip_wdata = ex_mem_store_data;
-    assign perip_wen   = ex_mem_valid&&ex_mem_mem_write;
-    assign perip_mask  = ex_mem_mem_size;    // funct3 low2
+    assign perip_addr  = (id_ex_valid&&(id_ex_mem_read||id_ex_mem_write))?alu_result:32'd0;
+    assign perip_wdata = forwarded_rs2_value;
+    assign perip_wen   = id_ex_valid&&id_ex_mem_write;
+    assign perip_mask  = id_ex_mem_size;    // funct3 low2
 
 
     logic [31:0] read_data;
