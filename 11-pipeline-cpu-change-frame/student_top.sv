@@ -43,6 +43,7 @@ module student_top#(
 
     // perip
     logic [31:0] perip_addr;
+    logic [31:0] perip_wdata;
     logic perip_wen;
     logic [1:0] perip_mask;
     logic [31:0] perip_rdata;
