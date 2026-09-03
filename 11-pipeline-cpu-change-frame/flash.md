@@ -66,3 +66,14 @@ run_regress.sh 一键回归，改 RTL 后必须先 vlog 再跑，否则测的是
     1,在这里通过perip_addr以及写使能来区分并且生成读使能传输给diver和bram，bram_sel=(perip_addr>=BRAM_ADDR_START&&perip_addr< BRAM_ADDR_END)  assign bram_ren=(bram_sel&&!perip_wen)   assign bram_wen=(bram_sel&&perip_wen)
     不必所有的端口都加入一路读的并且全程传输下来
     2,在这里我参照了在driver写的时候的思路 为了防止读的时候读是新的 并且覆盖了旧数据 我把两个信号在时钟周期锁存 perip_addr以及perip_wen锁存进perip_addr_q和perip_wen_q ai认可了我想法 但是还没有验证不确定到时会不会有问题
+
+优化:
+    原先的:
+    bram_din={16'b0, perip_wdata[15:0]}<<(offset * 8);
+    bram_we=4'b0011 << offset;
+    变成->bram_din = {2perip_wdata[15:0]};
+    bram的写入逻辑最终还是由地址决定 既然要写的部分已经确定了 那我直接整个字节都复制成一样的 然后不需要再进行移位的操作 原先移位的操作综合后是得到一组多路选择器
+    现在是写数据直连bram 不再需要控制信号控制 直接把最长路径砍了
+
+
+    

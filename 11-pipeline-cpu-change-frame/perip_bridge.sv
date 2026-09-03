@@ -118,7 +118,8 @@ module perip_bridge(
     assign seg_output[37] = 0;
     //help distinguishing with bram_ren and bram_wen 
     logic bram_sel;
-    assign bram_sel=(perip_addr>=BRAM_ADDR_START&& perip_addr<BRAM_ADDR_END);
+    //assign bram_sel=(perip_addr>=BRAM_ADDR_START&& perip_addr<BRAM_ADDR_END);
+    assign bram_sel=(perip_addr[31:18]==14'h2004);
 
     // dram rw
     dram_driver dram_driver_inst (

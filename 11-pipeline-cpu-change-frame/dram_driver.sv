@@ -91,11 +91,14 @@ module dram_driver(
                 bram_we=4'b1111;
             end
             2'b01: begin // sh
-                bram_din={16'b0, perip_wdata[15:0]}<<(offset * 8);
-                bram_we=4'b0011 << offset;
+                //bram_din={16'b0, perip_wdata[15:0]}<<(offset * 8);
+                bram_din={2{perip_wdata[15:0]}};
+                bram_we=offset[1]?4'b1100:4'b0011;
+                //bram_we=4'b0011 << offset;
             end
             2'b00: begin// sb
-                bram_din={24'b0, perip_wdata[7:0]}<<(offset * 8);
+                //bram_din={24'b0, perip_wdata[7:0]}<<(offset * 8);
+                bram_din={4{perip_wdata[7:0]}};
                 bram_we=4'b0001 << offset;
             end
             default: ;
