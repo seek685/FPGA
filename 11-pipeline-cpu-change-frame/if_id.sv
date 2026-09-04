@@ -14,7 +14,7 @@ module if_id(
     output logic [31:0] out_pc4,
     output logic [31:0] out_instr
 );
-    always_ff@(posedge clk or negedge rst) begin
+    always_ff@(posedge clk) begin
         if(rst==0) begin
             out_valid<=1'b0;
             out_pc<=32'd0;

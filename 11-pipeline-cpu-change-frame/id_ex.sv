@@ -51,7 +51,7 @@ module id_ex(
     output logic out_load_unsigned
 
 );
-    always_ff@(posedge clk or negedge rst_n) begin
+    always_ff@(posedge clk) begin
         if(rst_n==0)begin
             out_valid<=0;
             out_pc<=0;

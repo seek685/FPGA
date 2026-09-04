@@ -17,7 +17,7 @@ module mem_wb(
     output logic out_reg_write,
     output logic [1:0] out_MemtoReg
 );
-    always_ff@(posedge clk or negedge rst_n) begin
+    always_ff@(posedge clk) begin
         if(rst_n==1'b0) begin
             out_valid<=0;
             out_read_data<=0;

@@ -11,7 +11,8 @@ module myCPU(
     input logic[31:0] perip_rdata
 );
     logic stall;
-    logic flush;
+    logic if_id_flush;
+    logic id_ex_flush;
     logic if_id_valid;
     logic [31:0] if_id_pc;
     logic [31:0] if_id_pc4;
@@ -66,7 +67,7 @@ module myCPU(
 
 
     logic pc_stall;
-    assign pc_stall=stall&&!flush;
+    assign pc_stall=stall&&!if_id_flush;//flush priority>stall
     logic rst_n;
     assign rst_n = ~cpu_rst;
     //pc
@@ -112,6 +113,7 @@ module myCPU(
     //AND
     logic pc_src;
     assign pc_src=id_ex_branch&branch_1;
+
     //pc_4
     assign pc_4=pc+32'd4;
 
@@ -123,17 +125,37 @@ module myCPU(
   //             (id_ex_jump==2'b01)?pc_imm:  //jal
   //             (pc_src==1'b1)?pc_imm:  //b_type
   //                            pc_4;   //normal
-    assign flush=(id_ex_valid==1)&&(id_ex_jump!=2'b00 || pc_src==1'b1);
+    logic id_jal;
+    assign id_jal=(if_id_valid)&&(jump==2'b01);
 
+    logic ex_branch_redirect;
+    assign ex_branch_redirect=(id_ex_valid==1)&&(pc_src==1'b1);
+
+    logic ex_jalr_redirect;
+    assign ex_jalr_redirect=(id_ex_valid==1)&&(id_ex_jump==2'b10);
+
+    logic ex_redirect;
+    assign ex_redirect=(ex_branch_redirect||ex_jalr_redirect);
+
+    assign if_id_flush=(ex_redirect||id_jal);//jal only flush if_id
+    assign id_ex_flush=ex_redirect;
     always_comb begin
         next_pc=pc_4;
-        if(id_ex_valid==1) begin  
-            case(id_ex_jump)
-                2'b10:next_pc={alu_result[31:1],1'b0};
-                2'b01:next_pc=pc_imm;
-                default:next_pc=(pc_src==1'b1)?pc_imm:pc_4;
-            endcase
+        if(ex_redirect)begin
+            next_pc=(ex_branch_redirect)?pc_imm:{alu_result[31:1],1'b0};
         end
+        else if(id_jal)begin
+            //next_pc=pc+imm;
+            next_pc=if_id_pc+imm;
+        end
+        //if() begin  
+            //case(id_ex_jump)
+            //case(id_ex_jump)
+                //2'b10:next_pc={alu_result[31:1],1'b0};//jalr
+                //2'b01:next_pc=pc_imm;
+                //default:next_pc=(pc_src==1'b1)?pc_imm:pc_4;//b type
+            //endcase
+        //end
     end
                             
     //alu_src MUX
@@ -220,7 +242,7 @@ module myCPU(
     if_id u_if_id(
         .clk(cpu_clk),
         .rst(rst_n),
-        .flush(flush),
+        .flush(if_id_flush),
         .stall(stall),
         .in_valid(1'b1),
         .in_pc(pc),
@@ -234,7 +256,7 @@ module myCPU(
     id_ex u_id_ex(
         .clk(cpu_clk),
         .rst_n(rst_n),
-        .flush(flush),
+        .flush(id_ex_flush),
         .bubble(stall),
         .in_valid(if_id_valid),
         .in_pc(if_id_pc),
