@@ -10,6 +10,7 @@ module myCPU(
     output logic [31:0] perip_wdata,
     input logic[31:0] perip_rdata
 );
+
     logic [11:0] if_ghr_snapshot;
     logic [31:0] if_pred_target;
     logic [11:0] if_pht_index;
@@ -144,26 +145,36 @@ module myCPU(
     logic id_jal;
     assign id_jal=(if_id_valid)&&(jump==2'b01);
 
-    logic ex_branch_redirect;
-    assign ex_branch_redirect=(id_ex_valid==1);
+    logic ex_branch_mispredict;
+    logic actual_taken;
+    assign actual_taken=(id_ex_valid==1)&&(pc_src==1'b1);
+    //assign ex_branch_mispredict=actual_taken!=id_ex_pred_taken;
+    assign ex_branch_mispredict =id_ex_valid && id_ex_branch &&
+    ((id_ex_pred_taken != branch_1) ||
+     (id_ex_pred_taken && branch_1 &&
+      id_ex_pred_target != pc_imm));
 
     logic ex_jalr_redirect;
     assign ex_jalr_redirect=(id_ex_valid==1)&&(id_ex_jump==2'b10);
 
-    assign if_id_flush=(ex_jalr_redirect||ex_branch_redirect||id_jal);//jal only flush if_id
-    assign id_ex_flush=(ex_jalr_redirect||ex_branch_redirect);
+    assign if_id_flush=(ex_jalr_redirect||ex_branch_mispredict||id_jal);//jal only flush if_id
+    assign id_ex_flush=(ex_jalr_redirect||ex_branch_mispredict);
     always_comb begin
         next_pc=pc_4;
-        if(ex_branch_redirect)begin
-            next_pc=(id_ex_pred_taken==1)?id_ex_pred_target:id_ex_pc4;   
+        if(ex_branch_mispredict)begin
+            next_pc=(actual_taken)?pc_imm:id_ex_pc4;   
+        end
+        else if(ex_jalr_redirect)begin
+            next_pc={alu_result[31:1],1'b0};
         end
         else if(id_jal)begin
             //next_pc=pc+imm;
             next_pc=if_id_pc+imm;
         end
-        else if(ex_branch_redirect)begin
-            next_pc=:{alu_result[31:1],1'b0};
+        else if(if_pred_taken)begin //predict
+            next_pc=if_pred_target;
         end
+        
         //if() begin
             //case(id_ex_jump)
             //case(id_ex_jump)
@@ -414,7 +425,10 @@ module myCPU(
         .if_id_rs2(if_id_instr[24:20]),
         .load_use_stall(stall)
     );
-    logic if_is_branch=(pc[6:0]==7'b1100011);
+    logic [11:0] ex_ghr_recover_value;
+    assign ex_ghr_recover_value =ex_branch_mispredict? {id_ex_ghr_snapshot[10:0], actual_taken}:id_ex_ghr_snapshot;
+    logic if_is_branch;
+    assign if_is_branch=(irom_data[6:0]==7'b1100011);
     branch_predictor #(
         .PC_WIDTH(32),
         .GHR_WIDTH(12),
@@ -428,7 +442,7 @@ module myCPU(
         .rst_n(rst_n),
         .if_pc(pc),
         .if_is_branch(if_is_branch),
-        .if_accept((stall||stall)?0:1),
+        .if_accept(!if_id_flush&&!stall&&rst_n),
         .if_pred_taken(if_pred_taken),//out
         .if_pred_target(if_pred_target),//out
         .if_pht_index(if_pht_index),//out
@@ -438,7 +452,7 @@ module myCPU(
         .ex_pht_index(id_ex_pht_index),
         .ex_actual_taken(actual_taken),
         .ex_actual_target(id_ex_pc+id_ex_imm),
-        .ex_ghr_recover_valid(),
-        .ex_ghr_recover_value()
+        .ex_ghr_recover_valid(ex_branch_mispredict|| ex_jalr_redirect),
+        .ex_ghr_recover_value(ex_ghr_recover_value)
     );
 endmodule
