@@ -57,7 +57,7 @@ run_regress.sh 一键回归，改 RTL 后必须先 vlog 再跑，否则测的是
 
 把dram改为bram:
     旧：采用distributed ram 然后写是同步 读是异步 但是占用太多lut资源。
-    新：
+    新：读写均是是同步，ex阶段得到读的地址 mem阶段输出地址（vivado的bram IP核固定如此：读写同步）
     在driver层：
     1，vivado开启了字节写使能 如果不开启字节写使能的话 那么你要写半字必须先读后写 因为为了不改变其他位置上的值（vivado设置了32bit的位宽 寻址到以及写的地址都是4字节） 如果开启了写字节使能 bram内部自动帮你保持其他位置上的值 可以直接写 也符合常识 也不会因为时序混乱出问题。
     2，dram_driver读的时候要考虑到读的偏移和掩码 必须是之前的那个 而写不需要是是因为 读的时候是第一时钟沿把地址送出去了 而第二个时钟沿才得到读出来的地址 所以第二个时钟沿可能把后续的地址也输入进去了 然后这时候进行读的操作 得到的数据就是新地址读出来的数据 原来的被丢失了（这个读的说法其实是错误的 ） 而写操作不一样 直接把地址输入后上升沿直接写 哪怕时候再来一个写的地址 但是因为写操作已经完成了 没有任何影响
@@ -66,7 +66,7 @@ run_regress.sh 一键回归，改 RTL 后必须先 vlog 再跑，否则测的是
     1,在这里通过perip_addr以及写使能来区分并且生成读使能传输给diver和bram，bram_sel=(perip_addr>=BRAM_ADDR_START&&perip_addr< BRAM_ADDR_END)  assign bram_ren=(bram_sel&&!perip_wen)   assign bram_wen=(bram_sel&&perip_wen)
     不必所有的端口都加入一路读的并且全程传输下来
     2,在这里我参照了在driver写的时候的思路 为了防止读的时候读是新的 并且覆盖了旧数据 我把两个信号在时钟周期锁存 perip_addr以及perip_wen锁存进perip_addr_q和perip_wen_q ai认可了我想法 但是还没有验证不确定到时会不会有问题
-
+    验证：正确
 优化:
     原先的:
     1，bram_din={16'b0, perip_wdata[15:0]}<<(offset * 8);
