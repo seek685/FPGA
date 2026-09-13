@@ -36,8 +36,25 @@ module student_top#(
     output [P_SEG_CNT - 1:0]                    virtual_seg   
 );
 
-    // IROM
-    logic [31:0] pc;
+    // IROM request/response
+    logic irom_req_valid;
+    logic irom_req_ready;
+    logic [31:0] irom_req_pc;
+    logic [11:0] irom_req_ghr_snapshot;
+    logic [31:0] irom_req_pred_target;
+    logic [11:0] irom_req_pht_index;
+    logic irom_req_pred_taken;
+
+    logic irom_resp_valid;
+    logic irom_resp_ready;
+    logic [31:0] irom_resp_pc;
+    logic [31:0] irom_resp_instr;
+    logic [11:0] irom_resp_ghr_snapshot;
+    logic [31:0] irom_resp_pred_target;
+    logic [11:0] irom_resp_pht_index;
+    logic irom_resp_pred_taken;
+    logic irom_flush;
+
     logic [11:0] inst_addr;
     logic [31:0] instruction;
 
@@ -47,28 +64,63 @@ module student_top#(
     logic perip_wen;
     logic [1:0] perip_mask;
     logic [31:0] perip_rdata;
-    // 16KB = 2^12 * 32bit
-    assign inst_addr =(pc-32'h8000_0000)>>2;//pc[13:2]
-
     myCPU Core_cpu (
-        .cpu_rst            (w_clk_rst),
-        .cpu_clk            (w_cpu_clk),
+        .cpu_rst(w_clk_rst),
+        .cpu_clk(w_cpu_clk),
 
-        // Interface to IROM
-        .irom_addr          (pc),             
-        .irom_data          (instruction),   
+        // Interface to IROM driver
+        .irom_req_valid(irom_req_valid),
+        .irom_req_ready(irom_req_ready),
+        .irom_req_pc(irom_req_pc),
+        .irom_req_ghr_snapshot(irom_req_ghr_snapshot),
+        .irom_req_pred_target(irom_req_pred_target),
+        .irom_req_pht_index(irom_req_pht_index),
+        .irom_req_pred_taken(irom_req_pred_taken),
+        .irom_resp_valid(irom_resp_valid),
+        .irom_resp_ready(irom_resp_ready),
+        .irom_resp_pc(irom_resp_pc),
+        .irom_resp_instr(irom_resp_instr),
+        .irom_resp_ghr_snapshot(irom_resp_ghr_snapshot),
+        .irom_resp_pred_target(irom_resp_pred_target),
+        .irom_resp_pht_index(irom_resp_pht_index),
+        .irom_resp_pred_taken(irom_resp_pred_taken),
+        .irom_flush(irom_flush),
 
         // Interface to DRAM & periphera
-        .perip_addr         (perip_addr),     
-        .perip_wen          (perip_wen),     
-        .perip_mask         (perip_mask),   
-        .perip_wdata        (perip_wdata),    
-        .perip_rdata        (perip_rdata)     
+        .perip_addr(perip_addr),     
+        .perip_wen(perip_wen),     
+        .perip_mask(perip_mask),   
+        .perip_wdata(perip_wdata),    
+        .perip_rdata(perip_rdata)     
+    );
+
+    irom_driver u_irom_driver (
+        .clk (w_cpu_clk),
+        .rst_n(!w_clk_rst),
+        .flush(irom_flush),
+        .req_valid(irom_req_valid),
+        .req_ready(irom_req_ready),
+        .req_pc(irom_req_pc),
+        .req_ghr_snapshot(irom_req_ghr_snapshot),
+        .req_pred_target (irom_req_pred_target),
+        .req_pht_index(irom_req_pht_index),
+        .req_pred_taken(irom_req_pred_taken),
+        .resp_valid(irom_resp_valid),
+        .resp_ready(irom_resp_ready),
+        .resp_pc(irom_resp_pc),
+        .resp_instr(irom_resp_instr),
+        .resp_ghr_snapshot(irom_resp_ghr_snapshot),
+        .resp_pred_target (irom_resp_pred_target),
+        .resp_pht_index(irom_resp_pht_index),
+        .resp_pred_taken(irom_resp_pred_taken),
+        .bram_addr(inst_addr),
+        .bram_data(instruction)
     );
 
     IROM Mem_IROM (
-        .a          (inst_addr),
-        .spo        (instruction)
+        .clka(w_cpu_clk),
+        .addra(inst_addr),
+        .douta(instruction)
     );
     
     perip_bridge bridge_inst (

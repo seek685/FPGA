@@ -1,8 +1,24 @@
 module myCPU(
     input logic cpu_clk,
     input logic cpu_rst,
-    output logic[31:0] irom_addr,
-    input logic[31:0] irom_data,
+
+    output logic irom_req_valid,
+    input  logic irom_req_ready,
+    output logic [31:0] irom_req_pc,
+    output logic [11:0] irom_req_ghr_snapshot,
+    output logic [31:0] irom_req_pred_target,
+    output logic [11:0] irom_req_pht_index,
+    output logic irom_req_pred_taken,
+
+    input  logic irom_resp_valid,
+    output logic irom_resp_ready,
+    input  logic [31:0] irom_resp_pc,
+    input  logic [31:0] irom_resp_instr,
+    input  logic [11:0] irom_resp_ghr_snapshot,
+    input  logic [31:0] irom_resp_pred_target,
+    input  logic [11:0] irom_resp_pht_index,
+    input  logic irom_resp_pred_taken,
+    output logic irom_flush,
 
     output logic[31:0] perip_addr,
     output logic perip_wen,
@@ -84,7 +100,6 @@ module myCPU(
 
 
     logic pc_stall;
-    assign pc_stall=stall&&!if_id_flush;//flush priority>stall
     logic rst_n;
     assign rst_n = ~cpu_rst;
     //pc
@@ -112,10 +127,6 @@ module myCPU(
 
     logic [31:0] forwarded_rs1_value;
     logic [31:0] forwarded_rs2_value;
-
-    assign irom_addr=pc;
-    logic [31:0] instr;
-    assign instr = irom_data;
 
     //regfile
     logic [31:0] rdata1;
@@ -159,6 +170,22 @@ module myCPU(
 
     assign if_id_flush=(ex_jalr_redirect||ex_branch_mispredict||id_jal);//jal only flush if_id
     assign id_ex_flush=(ex_jalr_redirect||ex_branch_mispredict);
+
+    logic irom_req_fire;
+    assign irom_req_valid = rst_n && !if_id_flush;
+    assign irom_req_pc = pc;
+    assign irom_req_ghr_snapshot = if_ghr_snapshot;
+    assign irom_req_pred_target = if_pred_target;
+    assign irom_req_pht_index = if_pht_index;
+    assign irom_req_pred_taken = if_pred_taken;
+    assign irom_req_fire = irom_req_valid && irom_req_ready;
+
+    assign irom_resp_ready = !stall && !if_id_flush;
+    assign irom_flush = if_id_flush;
+
+    // Redirects must update the PC even when the fetch buffers are full.
+    assign pc_stall = !if_id_flush && !irom_req_fire;
+
     always_comb begin
         next_pc=pc_4;
         if(ex_branch_mispredict)begin
@@ -271,18 +298,18 @@ module myCPU(
         .rst(rst_n),
         .flush(if_id_flush),
         .stall(stall),
-        .in_valid(1'b1),
-        .in_pc(pc),
-        .in_pc4(pc_4),
-        .in_instr(irom_data),
+        .in_valid(irom_resp_valid),
+        .in_pc(irom_resp_pc),
+        .in_pc4(irom_resp_pc+32'd4),
+        .in_instr(irom_resp_instr),
         .out_valid(if_id_valid),
         .out_pc(if_id_pc),
         .out_pc4(if_id_pc4),
         .out_instr(if_id_instr),
-        .in_ghr_snapshot(if_ghr_snapshot),
-        .in_pred_target(if_pred_target),
-        .in_pht_index(if_pht_index),
-        .in_pred_taken(if_pred_taken),
+        .in_ghr_snapshot(irom_resp_ghr_snapshot),
+        .in_pred_target(irom_resp_pred_target),
+        .in_pht_index(irom_resp_pht_index),
+        .in_pred_taken(irom_resp_pred_taken),
         .out_ghr_snapshot(if_id_ghr_snapshot),
         .out_pred_target(if_id_pred_target),
         .out_pht_index(if_id_pht_index),
@@ -425,10 +452,11 @@ module myCPU(
         .if_id_rs2(if_id_instr[24:20]),
         .load_use_stall(stall)
     );
-    logic [11:0] ex_ghr_recover_value;
-    assign ex_ghr_recover_value =ex_branch_mispredict? {id_ex_ghr_snapshot[10:0], actual_taken}:id_ex_ghr_snapshot;
-    logic if_is_branch;
-    assign if_is_branch=(irom_data[6:0]==7'b1100011);
+    logic [11:0] ghr_recover_value;
+    assign ghr_recover_value = ex_branch_mispredict ?
+                               {id_ex_ghr_snapshot[10:0], actual_taken} :
+                               ex_jalr_redirect ? id_ex_ghr_snapshot :
+                               if_id_ghr_snapshot;
     branch_predictor #(
         .PC_WIDTH(32),
         .GHR_WIDTH(12),
@@ -441,8 +469,7 @@ module myCPU(
         .clk(cpu_clk),
         .rst_n(rst_n),
         .if_pc(pc),
-        .if_is_branch(if_is_branch),
-        .if_accept(!if_id_flush&&!stall&&rst_n),
+        .if_accept(irom_req_fire),
         .if_pred_taken(if_pred_taken),//out
         .if_pred_target(if_pred_target),//out
         .if_pht_index(if_pht_index),//out
@@ -452,7 +479,7 @@ module myCPU(
         .ex_pht_index(id_ex_pht_index),
         .ex_actual_taken(actual_taken),
         .ex_actual_target(id_ex_pc+id_ex_imm),
-        .ex_ghr_recover_valid(ex_branch_mispredict|| ex_jalr_redirect),
-        .ex_ghr_recover_value(ex_ghr_recover_value)
+        .ex_ghr_recover_valid(ex_branch_mispredict || ex_jalr_redirect || id_jal),
+        .ex_ghr_recover_value(ghr_recover_value)
     );
 endmodule

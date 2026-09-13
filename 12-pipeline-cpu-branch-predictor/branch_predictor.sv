@@ -11,7 +11,8 @@ module branch_predictor #(
     input  logic                       rst_n,
     // IF
     input  logic [PC_WIDTH-1:0]        if_pc,
-    input  logic                       if_is_branch,//myCPU decode and deliver while IF
+    // Legacy asynchronous-IROM input, kept for comparison only:
+    // input  logic                       if_is_branch,//myCPU decode and deliver while IF
     input  logic                       if_accept,
 
     output logic                       if_pred_taken,
@@ -66,21 +67,29 @@ module branch_predictor #(
     assign if_btb_hit=(btb_valid_q[if_btb_index]==1&&btb_tag_q[if_btb_index]==if_btb_tag);
     //hit:pc tag hit and valid
     assign if_btb_target=btb_target_q[if_btb_index];
-    assign if_ghr_update_valid=if_accept&&if_is_branch;
+
+    // assign if_ghr_update_valid=if_accept&&if_is_branch;
+    assign if_ghr_update_valid=if_accept&&if_btb_hit;
 
     always_comb begin
-        if(if_btb_hit&&if_ghr_update_valid)begin
-            if_pred_taken=if_pht_taken&&if_is_branch&&if_btb_hit;
-            if_pred_target=if_btb_target;
-            if_pht_index=if_pht_index_comb;
-            if_ghr_snapshot=ghr_q;
-        end
-        else begin
-            if_pred_taken=1'b0;
-            if_pred_target=if_pc+32'd4;
-            if_pht_index=if_pht_index_comb;
-            if_ghr_snapshot=ghr_q;
-        end
+        // Legacy asynchronous-IROM prediction logic:
+        // if(if_btb_hit&&if_ghr_update_valid)begin
+        //     if_pred_taken=if_pht_taken&&if_is_branch&&if_btb_hit;
+        //     if_pred_target=if_btb_target;
+        //     if_pht_index=if_pht_index_comb;
+        //     if_ghr_snapshot=ghr_q;
+        // end
+        // else begin
+        //     if_pred_taken=1'b0;
+        //     if_pred_target=if_pc+32'd4;
+        //     if_pht_index=if_pht_index_comb;
+        //     if_ghr_snapshot=ghr_q;
+        // end
+
+        if_pred_taken = if_btb_hit && if_pht_taken;
+        if_pred_target = if_btb_hit ? if_btb_target : if_pc+32'd4;
+        if_pht_index = if_pht_index_comb;
+        if_ghr_snapshot = ghr_q;
     end
     initial begin
 
@@ -106,11 +115,12 @@ module branch_predictor #(
                 pht_q[ex_pht_index][1]<=(pht_q[ex_pht_index][1]&pht_q[ex_pht_index][0])|(pht_q[ex_pht_index][1]&ex_actual_taken)|(pht_q[ex_pht_index][0]&ex_actual_taken);
                 pht_q[ex_pht_index][0]<=((ex_actual_taken|pht_q[ex_pht_index][1])&(~pht_q[ex_pht_index][0]))|(pht_q[ex_pht_index][1]&ex_actual_taken);
                 //pht- 00 01 10 11  a better way to decrease delays
-                if(ex_actual_taken)begin
+                // Legacy behavior only created a BTB entry for a taken branch:
+                // if(ex_actual_taken)begin
                 btb_valid_q[ex_btb_index]<=1'b1;
                 btb_tag_q[ex_btb_index]<=ex_branch_pc[31:11];
                 btb_target_q[ex_btb_index]<=ex_actual_target;
-                end
+                // end
             end
         end
     end
