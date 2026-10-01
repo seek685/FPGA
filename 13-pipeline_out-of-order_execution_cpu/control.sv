@@ -160,14 +160,23 @@ module ctrl (
     logic [1:0] alu_op;
 
     control u_control (
-        .opcode(opcode), .reg_write(reg_write), .alu_src_b(alu_src_b),
-        .alu_src_a(alu_src_a), .mem_read(mem_read), .mem_write(mem_write),
-        .MemtoReg(MemtoReg), .branch(branch), .jump(jump), .alu_op(alu_op),
+        .opcode(opcode),
+        .reg_write(reg_write),
+        .alu_src_b(alu_src_b),
+        .alu_src_a(alu_src_a),
+        .mem_read(mem_read),
+        .mem_write(mem_write),
+        .MemtoReg(MemtoReg), 
+        .branch(branch), 
+        .jump(jump), 
+        .alu_op(alu_op),
         .imm_sel(imm_sel)
     );
 
     alu_decoder u_alu_decoder (
-        .alu_op(alu_op), .funct3(funct3), .funct7_5(funct7_5),
+        .alu_op(alu_op), 
+        .funct3(funct3), 
+        .funct7_5(funct7_5),
         .alu_control(alu_control)
     );
 
