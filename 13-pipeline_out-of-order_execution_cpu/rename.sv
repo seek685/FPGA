@@ -5,6 +5,10 @@ module rename(
 //decode    
     input logic dec_valid,//current instruction is valid
     output logic dec_ready,//RS and rob have spare
+    input logic [2:0] dec_kind,
+    input logic [2:0] dec_funct3,
+    input logic [1:0] dec_alu_src_a,//01-pc  10-0  00/11-rs1
+    input logic dec_alu_src_b,//1-imm 0-rs2
     input logic [31:0] dec_pc,
     input logic [31:0] dec_imm,
     input logic [4:0] dec_rs1,
@@ -15,8 +19,8 @@ module rename(
     //if rs1(alu_a) read rs1/pc   rs2 read rs2/imm
     input logic dec_use_rs1,
     input logic dec_use_rs2,
-    input logic dec_rs1_is_pc,
-    input logic dec_rs2_is_imm,
+    //input logic dec_rs1_is_pc,
+    //input logic dec_rs2_is_imm,
 
 //ARF
     output logic [4:0] arf_rs1_addr,
@@ -54,6 +58,13 @@ module rename(
     input logic wb_valid,
     input logic [2:0]wb_tag,
     input logic [31:0]wb_value,
+
+    output logic [2:0] dispatch_kind,
+    output logic [31:0] dispatch_pc,
+    output logic [31:0] dispatch_imm,
+    output logic [2:0] dispatch_funct3,
+    output logic [1:0] dispatch_alu_src_a,
+    output logic dispatch_alu_src_b,
 //commit
     input logic commit_valid,
     input logic [2:0] commit_tag,
@@ -89,6 +100,12 @@ always_comb begin
         rob_rs1_tag=RAT[dec_rs1].tag;
         rob_rs2_tag=RAT[dec_rs2].tag;
         dispatch_alu_control=dec_alu_control;
+        dispatch_kind=dec_kind;
+        dispatch_pc=dec_pc;
+        dispatch_imm=dec_imm;
+        dispatch_funct3=dec_funct3;
+        dispatch_alu_src_a=dec_alu_src_a;
+        dispatch_alu_src_b=dec_alu_src_b;
         //dispatch_rob_tag=RAT[dec_rd].tag;
         dispatch_rob_tag=rob_alloc_tag;
         rob_rd=dec_rd;
@@ -100,11 +117,14 @@ always_comb begin
 
         dispatch_rs1_value=32'd0;
         dispatch_rs1_ready=0;
-        if(!dec_use_rs1&&dec_rs1_is_pc)begin   //pc
-            dispatch_rs1_value=dec_pc;
-            dispatch_rs1_ready=1;
-        end
-        else if(dec_use_rs1&&dec_rs1_is_pc==0)begin  //rs1
+
+//kind=0(R,I,lui,auipc)kind=1(branch)kind=2(jal)kind=3(jalr)kind=4(load)kind=5(store)
+        //if(!dec_use_rs1&&dec_kind)begin   //pc
+        //    dispatch_rs1_value=dec_rs1;
+        //    dispatch_rs1_ready=1;
+        //end
+        //else if(dec_use_rs1&&(dec_alu_src_a==2'b11||dec_alu_src_a==2'b00))begin  //rs1
+        if(dec_use_rs1)begin  //use rs1 
             if(dec_rs1==0)begin//rs1 is x0
                 dispatch_rs1_value=32'd0;
                 dispatch_rs1_ready=1;
@@ -141,12 +161,14 @@ always_comb begin
         dispatch_rs2_tag=RAT[dec_rs2].tag;
         dispatch_rs2_value=32'd0;
         dispatch_rs2_ready=0;
-        if(!dec_use_rs2&&dec_rs2_is_imm)begin
-            dispatch_rs2_value=dec_imm;
-            dispatch_rs2_ready=1;
-        end
-        else if(dec_use_rs2&&dec_rs2_is_imm==0)begin
-            if(dec_rs2==0)begin//rs1 is x0
+        
+        //branch-kind-1  I-kind-0  S(store)-kind-5
+        //if(dec_use_rs2)begin//S'rs2 regarded as write address,B'rs2 need to be stored
+        //    dispatch_rs2_value=dec_rs2;
+        //    dispatch_rs2_ready=1;
+        //end
+        if(dec_use_rs2)begin//use rs2
+            if(dec_rs2==0)begin//rs2 is x0
                 dispatch_rs2_value=32'd0;
                 dispatch_rs2_ready=1;
             end
@@ -171,7 +193,7 @@ always_comb begin
                 //dispatch_rs2_tag=RAT[dec_rs2].tag;
             end
         end
-        else begin
+        else begin//others which I view it deserded
             dispatch_rs2_value=32'd0;
             dispatch_rs2_ready=1;
         end 
@@ -249,6 +271,12 @@ always_comb begin
         dispatch_rs1_ready=0;
         dispatch_rs2_value=32'd0;
         dispatch_rs2_ready=0;
+        dispatch_kind=3'd0;
+        dispatch_pc=32'd0;
+        dispatch_imm=32'd0;
+        dispatch_funct3=3'd0;
+        dispatch_alu_src_a=2'd0;
+        dispatch_alu_src_b=0;
     end
 
   

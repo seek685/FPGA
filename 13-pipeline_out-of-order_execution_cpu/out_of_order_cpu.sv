@@ -12,6 +12,27 @@ module out_of_order_cpu(
 );
 logic rst_n;
 assign rst_n = ~cpu_rst;
+logic [31:0] pc;
+logic [31]
+
+logic if_id_valid;
+logic [31:0] if_id_pc;
+logic [31:0] if_id_instr;
+logic [31:0] dec_imm;
+logic dec_ready;
+logic branch;
+logic [1:0] jump;
+logic mem_write;
+logic mem_read;
+logic [1:0] MemtoReg;
+logic reg_write;
+logic [1:0] alu_src_a;
+logic alu_src_b;
+logic [2:0] imm_sel;
+logic [3:0] alu_control;
+logic [2:0] kind;
+logic use_rs1;
+logic use_rs2;
 
 logic rs_issue_valid;
 logic [2:0] rs_issue_rob_tag;
@@ -24,11 +45,25 @@ logic [2:0] issue_ex_rob_tag;
 logic [3:0] issue_ex_alu_control;
 logic [31:0] issue_ex_rs1_value;
 logic [31:0] issue_ex_rs2_value;
+logic [2:0] issue_ex_kind;
+logic [31:0] issue_ex_pc;
+logic [31:0] issue_ex_imm;
+logic [2:0] issue_ex_funct3;
+logic [1:0] issue_ex_alu_src_a;
+logic issue_ex_alu_src_b;
 
 logic [31:0]ex_alu_result;
 logic ex_wb_valid;
 logic [2:0]ex_wb_rob_tag;
-logic [31:0]ex_wb_alu_result;
+logic [31:0]ex_wb_value;
+logic ex_wb_result_valid;
+logic [2:0] ex_wb_kind;
+logic ex_wb_actual_taken;
+logic [31:0] ex_wb_actual_target;
+logic [31:0] ex_wb_actual_next_pc;
+logic ex_wb_broadcast_valid;
+assign ex_wb_broadcast_valid=ex_wb_valid&&ex_wb_result_valid;
+
 
 logic rob_commit_valid;
 logic [2:0]rob_commit_tag;
@@ -65,10 +100,123 @@ logic [31:0]rs2_value;
 logic rs2_valid;
 logic rs2_ready;
 
+logic [2:0] issue_kind;
+logic [31:0] issue_pc;
+logic [31:0] issue_imm;
+logic [2:0] issue_funct3;
+logic [1:0] issue_alu_src_a;
+logic issue_alu_src_b;
+logic [2:0] dispatch_kind;
+logic [31:0] dispatch_pc;
+logic [31:0] dispatch_imm;
+logic [2:0] dispatch_funct3;
+logic [1:0] dispatch_alu_src_a;
+logic dispatch_alu_src_b;
 
 logic [2:0]rob_head_tag;
 
+logic [31:0] issue_ex_rs1;
+logic [31:0] issue_ex_rs2;
 
+logic [31:0] ex_value;
+logic ex_complete_valid;
+logic ex_result_valid;
+logic ex_actual_taken;
+logic [31:0] ex_actual_target;
+logic [31:0] ex_actual_next_pc;
+logic [31:0] ex_pc_4;
+logic [31:0] ex_pc_imm;
+logic ex_branch_taken;
+
+// Branch and JAL targets are calculated separately from the ALU operands.
+
+// alu-a  and  alu-b
+assign issue_ex_rs1=(issue_ex_alu_src_a==2'b01)?issue_ex_pc:
+                        (issue_ex_alu_src_a==2'b10)?32'd0:
+                        issue_ex_rs1_value;
+assign issue_ex_rs2=(issue_ex_alu_src_b==1)?issue_ex_imm:issue_ex_rs2_value;
+
+assign ex_pc_4=issue_ex_pc+32'd4;
+assign ex_pc_imm=issue_ex_pc+issue_ex_imm;
+always_comb begin
+    ex_value=32'd0;
+    ex_complete_valid=0;
+    ex_actual_taken=0;
+    ex_result_valid=0;
+    ex_actual_target=32'd0;
+    ex_actual_next_pc=ex_pc_4;
+
+    case(issue_ex_kind)
+        3'd0: begin // I 
+            ex_complete_valid=issue_ex_valid;
+            ex_result_valid=issue_ex_valid;
+            ex_value=ex_alu_result;
+        end
+        3'd1: begin // branch
+            ex_complete_valid=issue_ex_valid;
+            ex_actual_taken=ex_branch_taken;
+            ex_actual_target=ex_pc_imm;
+            if(ex_branch_taken) ex_actual_next_pc=ex_pc_imm;
+        end
+        3'd2: begin // JAL
+            ex_complete_valid=issue_ex_valid;
+            ex_result_valid=issue_ex_valid;
+            ex_value=ex_pc_4;
+            ex_actual_taken=1;
+            ex_actual_target=ex_pc_imm;
+            ex_actual_next_pc=ex_pc_imm;
+        end
+        3'd3: begin // JALR
+            ex_complete_valid=issue_ex_valid;
+            ex_result_valid=issue_ex_valid;
+            ex_value=ex_pc_4;
+            ex_actual_taken=1;
+            ex_actual_target=ex_alu_result&32'hFFFF_FFFE;
+            ex_actual_next_pc=ex_alu_result&32'hFFFF_FFFE;
+        end
+        default: ; // Load and Store wait for their memory path.
+    endcase
+end
+
+
+
+
+pc u_pc(
+    .clk(cpu_clk),
+    .rst_n(rst_n),
+    .next_pc(next_pc),
+    .stall(pc_stall),
+    .pc(pc)
+);
+ctrl U_ctrl(
+    .opcode(if_id_instr[6:0]),
+    .funct3(if_id_instr[14:12]),
+    .funct7_5(if_id_instr[30]),
+    .branch(branch),
+    .jump(jump),
+    .mem_write(mem_write),
+    .mem_read(mem_read),
+    .MemtoReg(MemtoReg),
+    .reg_write(reg_write),
+    .alu_src_a(alu_src_a),
+    .alu_src_b(alu_src_b),
+    .imm_sel(imm_sel),
+    .alu_control(alu_control),
+    .kind(kind),
+    .use_rs1(use_rs1),
+    .use_rs2(use_rs2)
+);
+immgen U_immgen(
+    .instr(if_id_instr),
+    .imm_sel(imm_sel),
+    .imm(dec_imm)
+);
+branch_unit u_branch_unit(
+    .rdata1(issue_ex_rs1_value),
+    .rdata2(issue_ex_rs2_value),
+    .funct3(issue_ex_funct3),
+    .branch_1(ex_branch_taken)
+);
 rob ROB(
     .clk(cpu_clk),
     .rst_n(rst_n),
@@ -88,7 +236,7 @@ rob ROB(
     .rs2_value(rs2_value),
     .wb_tag(ex_wb_rob_tag),
     .wb_valid(ex_wb_valid),
-    .wb_value(ex_wb_alu_result),
+    .wb_value(ex_wb_value),
     .commit_valid(rob_commit_valid),
     .commit_tag(rob_commit_tag),
     .commit_rd(rob_commit_rd),
@@ -110,32 +258,47 @@ RS rs(
     .dispatch_rs2_value(dispatch_rs2_value),
     .dispatch_rs2_ready(dispatch_rs2_ready),
     .dispatch_rs2_tag(dispatch_rs2_tag),
-    .wb_valid(ex_wb_valid),
+    .dispatch_kind(dispatch_kind),
+    .dispatch_pc(dispatch_pc),
+    .dispatch_imm(dispatch_imm),
+    .dispatch_funct3(dispatch_funct3),
+    .dispatch_alu_src_a(dispatch_alu_src_a),
+    .dispatch_alu_src_b(dispatch_alu_src_b),
+    .wb_valid(ex_wb_broadcast_valid),
     .wb_tag(ex_wb_rob_tag),
-    .wb_value(ex_wb_alu_result),
+    .wb_value(ex_wb_value),
     .rob_head_tag(rob_head_tag),
     .issue_valid(rs_issue_valid),
     .issue_rob_tag(rs_issue_rob_tag),
     .issue_alu_control(rs_issue_alu_control),
     .issue_rs1_value(rs_issue_rs1_value),
-    .issue_rs2_value(rs_issue_rs2_value)
+    .issue_rs2_value(rs_issue_rs2_value),
+
+    .issue_kind(issue_kind),
+    .issue_pc(issue_pc),
+    .issue_imm(issue_imm),
+    .issue_funct3(issue_funct3),
+    .issue_alu_src_a(issue_alu_src_a),
+    .issue_alu_src_b(issue_alu_src_b)
 );
 rename Rename(
     .clk(cpu_clk),
     .rst_n(rst_n),
-    .dec_valid(),
-    .dec_ready(),
-    .dec_pc(),
-    .dec_imm(),
-    .dec_rs1(),
-    .dec_rs2(),
-    .dec_rd(),
-    .dec_reg_write(),
-    .dec_alu_control(),
-    .dec_use_rs1(),
-    .dec_use_rs2(),
-    .dec_rs1_is_pc(),
-    .dec_rs2_is_imm(),
+    .dec_valid(if_id_valid),
+    .dec_ready(dec_ready),
+    .dec_kind(kind),
+    .dec_funct3(if_id_instr[14:12]),
+    .dec_alu_src_a(alu_src_a),
+    .dec_alu_src_b(alu_src_b),
+    .dec_pc(if_id_pc),
+    .dec_imm(dec_imm),
+    .dec_rs1(if_id_instr[19:15]),
+    .dec_rs2(if_id_instr[24:20]),
+    .dec_rd(if_id_instr[11:7]),
+    .dec_reg_write(reg_write),
+    .dec_alu_control(alu_control),
+    .dec_use_rs1(use_rs1),
+    .dec_use_rs2(use_rs2),
     .arf_rs1_addr(arf_rs1_addr),
     .arf_rs1_value(arf_rs1_value),
     .arf_rs2_addr(arf_rs2_addr),
@@ -164,9 +327,17 @@ rename Rename(
     .dispatch_rs2_value(dispatch_rs2_value),
     .dispatch_rs2_ready(dispatch_rs2_ready),
     .dispatch_rs2_tag(dispatch_rs2_tag),
-    .wb_valid(ex_wb_valid),
+
+    .dispatch_kind(dispatch_kind),
+    .dispatch_pc(dispatch_pc),
+    .dispatch_imm(dispatch_imm),
+    .dispatch_funct3(dispatch_funct3),
+    .dispatch_alu_src_a(dispatch_alu_src_a),
+    .dispatch_alu_src_b(dispatch_alu_src_b),
+
+    .wb_valid(ex_wb_broadcast_valid),
     .wb_tag(ex_wb_rob_tag),
-    .wb_value(ex_wb_alu_result),
+    .wb_value(ex_wb_value),
     .commit_valid(rob_commit_valid),
     .commit_tag(rob_commit_tag),
     .commit_rd(rob_commit_rd),
@@ -184,34 +355,59 @@ issue_ex u_issue_ex(
     .out_rob_tag(issue_ex_rob_tag),
     .out_alu_control(issue_ex_alu_control),
     .out_rs1_value(issue_ex_rs1_value),
-    .out_rs2_value(issue_ex_rs2_value)
+    .out_rs2_value(issue_ex_rs2_value),
+
+    .in_kind(issue_kind),
+    .in_pc(issue_pc),
+    .in_imm(issue_imm),
+    .in_funct3(issue_funct3),
+    .in_alu_src_a(issue_alu_src_a),
+    .in_alu_src_b(issue_alu_src_b),
+    .out_kind(issue_ex_kind),
+    .out_pc(issue_ex_pc),
+    .out_imm(issue_ex_imm),
+    .out_funct3(issue_ex_funct3),
+    .out_alu_src_a(issue_ex_alu_src_a),
+    .out_alu_src_b(issue_ex_alu_src_b)
+
+);
+alu ALU(
+    .a(issue_ex_rs1),
+    .b(issue_ex_rs2),
+    .alu_control(issue_ex_alu_control),
+    .alu_result(ex_alu_result)
 );
 ex_wb u_ex_wb(
     .clk(cpu_clk),
     .rst_n(rst_n),
-    .in_valid(issue_ex_valid),
+    .in_valid(ex_complete_valid),
     .in_rob_tag(issue_ex_rob_tag),
-    .in_value(ex_alu_result),
+    .in_value(ex_value),
+    .in_result_valid(ex_result_valid),
+    .in_kind(issue_ex_kind),
+    .in_actual_taken(ex_actual_taken),
+    .in_actual_target(ex_actual_target),
+    .in_actual_next_pc(ex_actual_next_pc),
     .out_valid(ex_wb_valid),
     .out_rob_tag(ex_wb_rob_tag),
-    .out_value(ex_wb_alu_result)
+    .out_value(ex_wb_value),
+    .out_result_valid(ex_wb_result_valid),
+    .out_kind(ex_wb_kind),
+    .out_actual_taken(ex_wb_actual_taken),
+    .out_actual_target(ex_wb_actual_target),
+    .out_actual_next_pc(ex_wb_actual_next_pc)
 );
 regfile u_regfile(
-        .raddr1(arf_rs1_addr),
-        .raddr2(arf_rs2_addr),
-        .waddr(rob_commit_rd),
-        .we(rob_commit_valid&&rob_commit_reg_write),
-        .clk(cpu_clk),
-        .rst_n(rst_n),
-        .wdata(rob_commit_value),
-        .rdata1(arf_rs1_value),
-        .rdata2(arf_rs2_value)
+    .raddr1(arf_rs1_addr),
+    .raddr2(arf_rs2_addr),
+    .waddr(rob_commit_rd),
+    .we(rob_commit_valid&&rob_commit_reg_write),
+    .clk(cpu_clk),
+    .rst_n(rst_n),
+    .wdata(rob_commit_value),
+    .rdata1(arf_rs1_value),
+    .rdata2(arf_rs2_value)
     );
-alu ALU(
-    .a(issue_ex_rs1_value),
-    .b(issue_ex_rs2_value),
-    .alu_control(issue_ex_alu_control),
-    .alu_result(ex_alu_result)
-);
+
 
 endmodule

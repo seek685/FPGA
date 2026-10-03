@@ -42,6 +42,11 @@ module rob(
         logic reg_write;
         logic [31:0] value;
         logic [31:0] pc;
+
+        logic [2:0] kind;
+        logic actual_taken;
+        logic [31:0] actual_target;
+        logic [31:0] actual_next_pc;
     }ROB_t;
     ROB_t ROB [0:7];
 
