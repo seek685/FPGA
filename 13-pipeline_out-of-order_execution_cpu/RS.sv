@@ -23,7 +23,20 @@ module RS(
     output logic [2:0]issue_rob_tag,
     output logic [3:0] issue_alu_control,
     output logic [31:0] issue_rs1_value,
-    output logic [31:0] issue_rs2_value
+    output logic [31:0] issue_rs2_value,
+
+    input logic [2:0] dispatch_kind,
+    input logic [31:0] dispatch_pc,
+    input logic [31:0] dispatch_imm,
+    input logic [2:0] dispatch_funct3,
+    input logic [1:0] dispatch_alu_src_a,
+    input logic dispatch_alu_src_b,
+    output logic [2:0] issue_kind,
+    output logic [31:0] issue_pc,
+    output logic [31:0] issue_imm,
+    output logic [2:0] issue_funct3,
+    output logic [1:0] issue_alu_src_a,
+    output logic issue_alu_src_b
 
 );  
     logic [1:0] rs_spare_index;
@@ -40,6 +53,13 @@ module RS(
         logic rs2_ready;
         logic [2:0]tag_1;
         logic [2:0]tag_2;
+        
+        logic [2:0] kind;
+        logic [31:0] pc;
+        logic [31:0] imm;
+        logic [2:0] funct3;
+        logic [1:0] alu_src_a;
+        logic alu_src_b;
     }RS_t;
     RS_t RS[3:0];
 
@@ -68,6 +88,14 @@ module RS(
             issue_alu_control=RS[index].op;
             issue_rs1_value=RS[index].rs1;
             issue_rs2_value=RS[index].rs2;
+            
+            issue_kind=RS[index].kind;
+            issue_pc=RS[index].pc;
+            issue_imm=RS[index].imm;
+            issue_funct3=RS[index].funct3;
+            issue_alu_src_a=RS[index].alu_src_a;
+            issue_alu_src_b=RS[index].alu_src_b;
+            
         end
         else begin
             issue_valid=0;
@@ -75,6 +103,13 @@ module RS(
             issue_alu_control=4'd0;
             issue_rs1_value=32'd0;
             issue_rs2_value=32'd0;
+
+            issue_kind=3'd0;
+            issue_pc=32'd0;
+            issue_imm=32'd0;
+            issue_funct3=3'd0;
+            issue_alu_src_a=2'd0;
+            issue_alu_src_b=0;
         end
 
         if(RS[0].busy==0)begin
@@ -168,6 +203,7 @@ module RS(
                 //RS[~rs_busy&(rs_busy+1)].tag_2<=dispatch_rs2_tag;
                 //RS[~rs_busy&(rs_busy+1)].dest_tag<=dispatch_rob_tag;
                 //RS[~rs_busy&(rs_busy+1)].op<=dispatch_alu_control;
+
                 //map(reflect) vectors to spare_index 
                 RS[rs_spare_index].busy<=1;
                 RS[rs_spare_index].rs1<=dispatch_rs1_value;
@@ -178,6 +214,12 @@ module RS(
                 RS[rs_spare_index].tag_2<=dispatch_rs2_tag;
                 RS[rs_spare_index].dest_tag<=dispatch_rob_tag;
                 RS[rs_spare_index].op<=dispatch_alu_control;
+                RS[rs_spare_index].kind<=dispatch_kind;
+                RS[rs_spare_index].pc<=dispatch_pc;
+                RS[rs_spare_index].imm<=dispatch_imm;
+                RS[rs_spare_index].funct3<=dispatch_funct3;
+                RS[rs_spare_index].alu_src_a<=dispatch_alu_src_a;
+                RS[rs_spare_index].alu_src_b<=dispatch_alu_src_b;
                 //rs_busy<=(rs_busy+1)|rs_busy;
                 
             end

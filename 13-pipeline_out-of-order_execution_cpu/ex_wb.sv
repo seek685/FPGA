@@ -11,6 +11,15 @@ module ex_wb(
     input logic [31:0] in_actual_target,
     input logic [31:0] in_actual_next_pc,
 
+    input logic in_mem_prepare,
+    input logic [31:0] in_mem_addr,
+    input logic [31:0] in_store_data,
+
+
+    output logic out_mem_prepare,
+    output logic [31:0] out_mem_addr,
+    output logic [31:0] out_store_data,
+
     output logic out_valid,
     output logic [2:0] out_rob_tag,
     output logic [31:0] out_value,
@@ -32,6 +41,9 @@ module ex_wb(
             out_actual_taken<=0;
             out_actual_target<=32'd0;
             out_actual_next_pc<=32'd0;
+            out_mem_prepare<=0;
+            out_mem_addr<=32'd0;
+            out_mem_data<=32'd0;
         end
         else begin
             out_valid<=in_valid;
@@ -42,6 +54,9 @@ module ex_wb(
             out_actual_taken<=in_actual_taken;
             out_actual_target<=in_actual_target;
             out_actual_next_pc<=in_actual_next_pc;
+            out_mem_prepare<=in_mem_prepare;
+            out_mem_addr<=in_mem_addr;
+            out_mem_data<=in_mem_data;
         end
     end
 

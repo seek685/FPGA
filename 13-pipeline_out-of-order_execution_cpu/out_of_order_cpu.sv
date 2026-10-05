@@ -13,7 +13,7 @@ module out_of_order_cpu(
 logic rst_n;
 assign rst_n = ~cpu_rst;
 logic [31:0] pc;
-logic [31]
+
 
 logic if_id_valid;
 logic [31:0] if_id_pc;
@@ -66,6 +66,7 @@ assign ex_wb_broadcast_valid=ex_wb_valid&&ex_wb_result_valid;
 
 
 logic rob_commit_valid;
+logic commit_fire;
 logic [2:0]rob_commit_tag;
 logic [4:0] rob_commit_rd;
 logic rob_commit_reg_write;
@@ -138,6 +139,9 @@ assign issue_ex_rs2=(issue_ex_alu_src_b==1)?issue_ex_imm:issue_ex_rs2_value;
 
 assign ex_pc_4=issue_ex_pc+32'd4;
 assign ex_pc_imm=issue_ex_pc+issue_ex_imm;
+
+logic access_address_event;
+logic ordinary_event;
 always_comb begin
     ex_value=32'd0;
     ex_complete_valid=0;
@@ -145,18 +149,24 @@ always_comb begin
     ex_result_valid=0;
     ex_actual_target=32'd0;
     ex_actual_next_pc=ex_pc_4;
+    //improve:separate 2 event
+    access_address_event=0;
+    ordinary_event=0;
+
 
     case(issue_ex_kind)
         3'd0: begin // I 
             ex_complete_valid=issue_ex_valid;
             ex_result_valid=issue_ex_valid;
             ex_value=ex_alu_result;
+            ordinary_event=1;
         end
         3'd1: begin // branch
             ex_complete_valid=issue_ex_valid;
             ex_actual_taken=ex_branch_taken;
             ex_actual_target=ex_pc_imm;
             if(ex_branch_taken) ex_actual_next_pc=ex_pc_imm;
+             ordinary_event=1;
         end
         3'd2: begin // JAL
             ex_complete_valid=issue_ex_valid;
@@ -165,6 +175,7 @@ always_comb begin
             ex_actual_taken=1;
             ex_actual_target=ex_pc_imm;
             ex_actual_next_pc=ex_pc_imm;
+             ordinary_event=1;
         end
         3'd3: begin // JALR
             ex_complete_valid=issue_ex_valid;
@@ -173,6 +184,23 @@ always_comb begin
             ex_actual_taken=1;
             ex_actual_target=ex_alu_result&32'hFFFF_FFFE;
             ex_actual_next_pc=ex_alu_result&32'hFFFF_FFFE;
+            ordinary_event=1;
+        end
+        //already add load and store
+        3'd4:begin //load
+            ex_complete_valid=issue_ex_valid;
+            ex_result_valid=issue_ex_valid;
+            ex_value=ex_alu_result;//rs1+imm(address)
+            ex_actual_taken=1;
+            access_address_event=1;
+        end
+        3'd5:begin//store
+            ex_complete_valid=issue_ex_valid;
+            ex_result_valid=issue_ex_valid;
+            ex_value=ex_alu_result;//rs1+imm(address)
+            ex_actual_taken=1;
+            ex_actual_target=issue_ex_rs2;//rs2 regarded as write address
+            access_address_event=1;
         end
         default: ; // Load and Store wait for their memory path.
     endcase
@@ -217,9 +245,12 @@ branch_unit u_branch_unit(
     .funct3(issue_ex_funct3),
     .branch_1(ex_branch_taken)
 );
+//wb maybe is access_address_event or ordinary_event
+
 rob ROB(
     .clk(cpu_clk),
     .rst_n(rst_n),
+    .alloc_kind(dispatch_kind),
     .alloc_ready(rob_alloc_ready),
     .alloc_tag(rob_alloc_tag),
     .alloc_fire(rob_alloc_fire),
@@ -237,6 +268,28 @@ rob ROB(
     .wb_tag(ex_wb_rob_tag),
     .wb_valid(ex_wb_valid),
     .wb_value(ex_wb_value),
+
+    .wb_actual_target(ex_wb_actual_target),
+    .wb_actual_taken(ex_wb_actual_taken),
+    .wb_actual_next_pc(ex_wb_actual_next_pc),
+    .mem_prepare_valid(),
+    .mem_prepare_tag(),
+    .mem_prepare_addr(),
+    .mem_prepare_store_data(),
+    .head_valid(),
+    .head_kind(),
+    .head_mem_prepare(),
+    .head_mem_addr(),
+    .head_store_data(),
+    .head_funct3(),
+
+
+    .commit_ready(1),
+    .commit_fire(commit_fire),
+    .commit_actual_taken(),
+    .commit_actual_target(),
+    .commit_actual_next_pc(),
+
     .commit_valid(rob_commit_valid),
     .commit_tag(rob_commit_tag),
     .commit_rd(rob_commit_rd),
@@ -338,7 +391,8 @@ rename Rename(
     .wb_valid(ex_wb_broadcast_valid),
     .wb_tag(ex_wb_rob_tag),
     .wb_value(ex_wb_value),
-    .commit_valid(rob_commit_valid),
+    //.commit_valid(rob_commit_valid),
+    .commit_valid(commit_fire),
     .commit_tag(rob_commit_tag),
     .commit_rd(rob_commit_rd),
     .commit_reg_write(rob_commit_reg_write)
@@ -380,7 +434,8 @@ alu ALU(
 ex_wb u_ex_wb(
     .clk(cpu_clk),
     .rst_n(rst_n),
-    .in_valid(ex_complete_valid),
+    //.in_valid(ex_complete_valid),
+    .in_valid(),//wb_valid
     .in_rob_tag(issue_ex_rob_tag),
     .in_value(ex_value),
     .in_result_valid(ex_result_valid),
@@ -401,7 +456,7 @@ regfile u_regfile(
     .raddr1(arf_rs1_addr),
     .raddr2(arf_rs2_addr),
     .waddr(rob_commit_rd),
-    .we(rob_commit_valid&&rob_commit_reg_write),
+    .we(commit_fire&&rob_commit_reg_write),
     .clk(cpu_clk),
     .rst_n(rst_n),
     .wdata(rob_commit_value),

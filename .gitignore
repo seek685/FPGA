@@ -23,3 +23,9 @@ Thumbs.db
 
 # Pango Design Suite 安装目录（勿提交）
 PDS/
+
+#测试文件
+test-1/
+test-2/
+#生图
+output/
