@@ -1,12 +1,17 @@
 module rename(
     input logic clk,
     input logic rst_n,
+    input logic flush,
 
 //decode    
     input logic dec_valid,//current instruction is valid
     output logic dec_ready,//RS and rob have spare
     input logic [2:0] dec_kind,
     input logic [2:0] dec_funct3,
+    input logic dec_pred_taken,
+    input logic [31:0] dec_pred_target,
+    input logic [11:0] dec_pht_index,
+    input logic [11:0] dec_ghr_snapshot,
     input logic [1:0] dec_alu_src_a,//01-pc  10-0  00/11-rs1
     input logic dec_alu_src_b,//1-imm 0-rs2
     input logic [31:0] dec_pc,
@@ -34,6 +39,11 @@ module rename(
     output logic [4:0] rob_rd,//if RAT no reflect read ARF and alloc RAT[rd]
     output logic rob_alloc_reg_write,
     output logic [31:0]rob_alloc_pc,
+    output logic [2:0] rob_alloc_funct3,
+    output logic rob_alloc_pred_taken,
+    output logic [31:0] rob_alloc_pred_target,
+    output logic [11:0] rob_alloc_pht_index,
+    output logic [11:0] rob_alloc_ghr_snapshot,
 
     output logic [2:0]rob_rs1_tag,//if RAT reflect read
     input logic rob_rs1_valid,
@@ -81,7 +91,12 @@ RAT_t RAT [31:0];
 
 always_comb begin
     //rob and rs can be allocated
-    if(rob_alloc_ready&&rs_alloc_ready&&dec_valid)begin
+    if(flush)begin
+        dec_ready=1'b0;
+        dispatch_fire=1'b0;
+        rob_alloc_fire=1'b0;
+    end
+    else if(rob_alloc_ready&&rs_alloc_ready&&dec_valid)begin
         dec_ready=1;
         dispatch_fire=1;
         rob_alloc_fire=1;
@@ -114,6 +129,11 @@ always_comb begin
         arf_rs1_addr=dec_rs1;
         dispatch_rs1_tag=RAT[dec_rs1].tag;
         rob_alloc_pc=dec_pc;
+        rob_alloc_funct3=dec_funct3;
+        rob_alloc_pred_taken=dec_pred_taken;
+        rob_alloc_pred_target=dec_pred_target;
+        rob_alloc_pht_index=dec_pht_index;
+        rob_alloc_ghr_snapshot=dec_ghr_snapshot;
 
         dispatch_rs1_value=32'd0;
         dispatch_rs1_ready=0;
@@ -267,6 +287,11 @@ always_comb begin
         dispatch_rs1_tag=3'd0;
         dispatch_rs2_tag=3'd0;
         rob_alloc_pc=32'd0;
+        rob_alloc_funct3=3'd0;
+        rob_alloc_pred_taken=1'b0;
+        rob_alloc_pred_target=32'd0;
+        rob_alloc_pht_index=12'd0;
+        rob_alloc_ghr_snapshot=12'd0;
         dispatch_rs1_value=32'd0;
         dispatch_rs1_ready=0;
         dispatch_rs2_value=32'd0;
@@ -292,6 +317,12 @@ always_ff@(posedge clk)begin
         for(int i=0;i<32;i++)begin
             RAT[i].valid<=0;
             RAT[i].tag<=3'd0;    
+        end
+    end
+    else if(flush)begin
+        for(int i=0;i<32;i++)begin
+            RAT[i].valid<=1'b0;
+            RAT[i].tag<=3'd0;
         end
     end
     else begin

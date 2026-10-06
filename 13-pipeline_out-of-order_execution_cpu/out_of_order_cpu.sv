@@ -13,11 +13,37 @@ module out_of_order_cpu(
 logic rst_n;
 assign rst_n = ~cpu_rst;
 logic [31:0] pc;
+assign irom_addr=pc;
+assign perip_addr=32'd0;
+assign perip_wen=1'b0;
+assign perip_mask=2'b10;
+assign perip_wdata=32'd0;
+logic [31:0] next_pc;
+logic pc_stall;
+logic fetch_accept;
+logic if_id_flush;
+logic fetch_is_branch;
+logic fetch_pred_taken;
+logic [31:0] fetch_pred_target;
+logic [31:0] fetch_next_pc;
+logic [11:0] fetch_pht_index;
+logic [11:0] fetch_ghr_snapshot;
+logic [31:0] fetch_jal_target;
+logic fetch_is_jal;
+logic if_pred_taken;
+logic [31:0] if_pred_target;
+logic rob_commit_mispredict;
+logic frontend_flush;
 
 
 logic if_id_valid;
 logic [31:0] if_id_pc;
 logic [31:0] if_id_instr;
+logic [31:0] if_id_pc4;
+logic [11:0] if_id_ghr_snapshot;
+logic [31:0] if_id_pred_target;
+logic [11:0] if_id_pht_index;
+logic if_id_pred_taken;
 logic [31:0] dec_imm;
 logic dec_ready;
 logic branch;
@@ -61,8 +87,15 @@ logic [2:0] ex_wb_kind;
 logic ex_wb_actual_taken;
 logic [31:0] ex_wb_actual_target;
 logic [31:0] ex_wb_actual_next_pc;
+logic ex_wb_mem_prepare;
+logic [31:0] ex_wb_mem_addr;
+logic [31:0] ex_wb_store_data;
 logic ex_wb_broadcast_valid;
-assign ex_wb_broadcast_valid=ex_wb_valid&&ex_wb_result_valid;
+logic normal_wb_valid;
+logic mem_prepare_wb_valid;
+assign ex_wb_broadcast_valid=ex_wb_valid&&ex_wb_result_valid&&!ex_wb_mem_prepare;
+assign normal_wb_valid=ex_wb_valid&&!ex_wb_mem_prepare;
+assign mem_prepare_wb_valid=ex_wb_valid&&ex_wb_mem_prepare;
 
 
 logic rob_commit_valid;
@@ -71,6 +104,15 @@ logic [2:0]rob_commit_tag;
 logic [4:0] rob_commit_rd;
 logic rob_commit_reg_write;
 logic [31:0] rob_commit_value;
+logic [31:0] rob_commit_pc;
+logic [2:0] rob_commit_kind;
+logic rob_commit_pred_taken;
+logic [31:0] rob_commit_pred_target;
+logic [11:0] rob_commit_pht_index;
+logic [11:0] rob_commit_ghr_snapshot;
+logic rob_commit_actual_taken;
+logic [31:0] rob_commit_actual_target;
+logic [31:0] rob_commit_actual_next_pc;
 logic [4:0]arf_rs1_addr;
 logic [4:0]arf_rs2_addr;
 logic [31:0]arf_rs1_value;
@@ -113,6 +155,11 @@ logic [31:0] dispatch_imm;
 logic [2:0] dispatch_funct3;
 logic [1:0] dispatch_alu_src_a;
 logic dispatch_alu_src_b;
+logic [2:0] rob_alloc_funct3;
+logic rob_alloc_pred_taken;
+logic [31:0] rob_alloc_pred_target;
+logic [11:0] rob_alloc_pht_index;
+logic [11:0] rob_alloc_ghr_snapshot;
 
 logic [2:0]rob_head_tag;
 
@@ -128,6 +175,9 @@ logic [31:0] ex_actual_next_pc;
 logic [31:0] ex_pc_4;
 logic [31:0] ex_pc_imm;
 logic ex_branch_taken;
+logic ex_mem_prepare;
+logic [31:0] ex_mem_addr;
+logic [31:0] ex_store_data;
 
 // Branch and JAL targets are calculated separately from the ALU operands.
 
@@ -149,6 +199,9 @@ always_comb begin
     ex_result_valid=0;
     ex_actual_target=32'd0;
     ex_actual_next_pc=ex_pc_4;
+    ex_mem_prepare=1'b0;
+    ex_mem_addr=32'd0;
+    ex_store_data=32'd0;
     //improve:separate 2 event
     access_address_event=0;
     ordinary_event=0;
@@ -189,17 +242,15 @@ always_comb begin
         //already add load and store
         3'd4:begin //load
             ex_complete_valid=issue_ex_valid;
-            ex_result_valid=issue_ex_valid;
-            ex_value=ex_alu_result;//rs1+imm(address)
-            ex_actual_taken=1;
+            ex_mem_prepare=issue_ex_valid;
+            ex_mem_addr=ex_alu_result;
             access_address_event=1;
         end
         3'd5:begin//store
             ex_complete_valid=issue_ex_valid;
-            ex_result_valid=issue_ex_valid;
-            ex_value=ex_alu_result;//rs1+imm(address)
-            ex_actual_taken=1;
-            ex_actual_target=issue_ex_rs2;//rs2 regarded as write address
+            ex_mem_prepare=issue_ex_valid;
+            ex_mem_addr=ex_alu_result;
+            ex_store_data=issue_ex_rs2_value;
             access_address_event=1;
         end
         default: ; // Load and Store wait for their memory path.
@@ -209,7 +260,69 @@ end
 
 
 
-pc u_pc(
+assign fetch_is_branch=(irom_data[6:0]==7'b1100011);
+assign fetch_is_jal=(irom_data[6:0]==7'b1101111);
+assign fetch_jal_target=pc+{{12{irom_data[31]}},irom_data[19:12],irom_data[20],irom_data[30:21],1'b0};
+assign fetch_pred_taken=fetch_is_jal ? 1'b1 : (fetch_is_branch ? if_pred_taken : 1'b0);
+assign fetch_pred_target=fetch_is_jal ? fetch_jal_target : (fetch_is_branch ? if_pred_target : pc+32'd4);
+assign fetch_next_pc=fetch_pred_taken ? fetch_pred_target : pc+32'd4;
+assign commit_mispredict =
+    (rob_commit_kind==3'd1) &&
+    ((rob_commit_pred_taken!=rob_commit_actual_taken) ||
+     (rob_commit_pred_taken && rob_commit_actual_taken &&
+      rob_commit_pred_target!=rob_commit_actual_target)) ||
+    ((rob_commit_kind==3'd2 || rob_commit_kind==3'd3) &&
+      rob_commit_pred_target!=rob_commit_actual_next_pc);
+assign frontend_flush=commit_fire&&commit_mispredict;
+assign fetch_accept=!frontend_flush && (!if_id_valid || dispatch_fire);
+assign pc_stall=!fetch_accept && !frontend_flush;
+assign next_pc=frontend_flush ? rob_commit_actual_next_pc : fetch_next_pc;
+
+if_id u_if_id(
+    .clk(cpu_clk),
+    .rst(rst_n),
+    .flush(frontend_flush),
+    .stall(pc_stall),
+    .in_valid(fetch_accept),
+    .in_pc(pc),
+    .in_pc4(pc+32'd4),
+    .in_instr(irom_data),
+    .in_ghr_snapshot(fetch_ghr_snapshot),
+    .in_pred_target(fetch_pred_target),
+    .in_pht_index(fetch_pht_index),
+    .in_pred_taken(fetch_pred_taken),
+    .out_valid(if_id_valid),
+    .out_pc(if_id_pc),
+    .out_pc4(if_id_pc4),
+    .out_instr(if_id_instr),
+    .out_ghr_snapshot(if_id_ghr_snapshot),
+    .out_pred_target(if_id_pred_target),
+    .out_pht_index(if_id_pht_index),
+    .out_pred_taken(if_id_pred_taken)
+);
+
+branch_predictor u_branch_predictor(
+    .clk(cpu_clk),
+    .rst_n(rst_n),
+    .if_pc(pc),
+    .if_is_branch(fetch_is_branch),
+    .if_accept(fetch_accept),
+    .if_pred_taken(if_pred_taken),
+    .if_pred_target(if_pred_target),
+    .if_pht_index(fetch_pht_index),
+    .if_ghr_snapshot(fetch_ghr_snapshot),
+    .ex_train_valid(commit_fire && rob_commit_kind==3'd1),
+    .ex_branch_pc(rob_commit_pc),
+    .ex_pht_index(rob_commit_pht_index),
+    .ex_actual_taken(rob_commit_actual_taken),
+    .ex_actual_target(rob_commit_actual_target),
+    .ex_ghr_recover_valid(frontend_flush &&
+        (rob_commit_kind==3'd1 || rob_commit_kind==3'd2 || rob_commit_kind==3'd3)),
+    .ex_ghr_recover_value((rob_commit_kind==3'd1) ?
+        {rob_commit_ghr_snapshot[10:0],rob_commit_actual_taken} : rob_commit_ghr_snapshot)
+);
+
+ pc u_pc(
     .clk(cpu_clk),
     .rst_n(rst_n),
     .next_pc(next_pc),
@@ -250,7 +363,13 @@ branch_unit u_branch_unit(
 rob ROB(
     .clk(cpu_clk),
     .rst_n(rst_n),
+    .flush(frontend_flush),
     .alloc_kind(dispatch_kind),
+    .alloc_funct3(rob_alloc_funct3),
+    .alloc_pred_taken(rob_alloc_pred_taken),
+    .alloc_pred_target(rob_alloc_pred_target),
+    .alloc_pht_index(rob_alloc_pht_index),
+    .alloc_ghr_snapshot(rob_alloc_ghr_snapshot),
     .alloc_ready(rob_alloc_ready),
     .alloc_tag(rob_alloc_tag),
     .alloc_fire(rob_alloc_fire),
@@ -266,16 +385,16 @@ rob ROB(
     .rs2_ready(rs2_ready),
     .rs2_value(rs2_value),
     .wb_tag(ex_wb_rob_tag),
-    .wb_valid(ex_wb_valid),
+    .wb_valid(normal_wb_valid),
     .wb_value(ex_wb_value),
 
     .wb_actual_target(ex_wb_actual_target),
     .wb_actual_taken(ex_wb_actual_taken),
     .wb_actual_next_pc(ex_wb_actual_next_pc),
-    .mem_prepare_valid(),
-    .mem_prepare_tag(),
-    .mem_prepare_addr(),
-    .mem_prepare_store_data(),
+    .mem_prepare_valid(mem_prepare_wb_valid),
+    .mem_prepare_tag(ex_wb_rob_tag),
+    .mem_prepare_addr(ex_wb_mem_addr),
+    .mem_prepare_store_data(ex_wb_store_data),
     .head_valid(),
     .head_kind(),
     .head_mem_prepare(),
@@ -284,23 +403,29 @@ rob ROB(
     .head_funct3(),
 
 
-    .commit_ready(1),
+    .commit_ready(1'b1),
     .commit_fire(commit_fire),
-    .commit_actual_taken(),
-    .commit_actual_target(),
-    .commit_actual_next_pc(),
+    .commit_actual_taken(rob_commit_actual_taken),
+    .commit_actual_target(rob_commit_actual_target),
+    .commit_actual_next_pc(rob_commit_actual_next_pc),
 
     .commit_valid(rob_commit_valid),
     .commit_tag(rob_commit_tag),
     .commit_rd(rob_commit_rd),
     .commit_reg_write(rob_commit_reg_write),
     .commit_value(rob_commit_value),
-    .commit_pc(),
+    .commit_pc(rob_commit_pc),
+    .commit_kind(rob_commit_kind),
+    .commit_pred_taken(rob_commit_pred_taken),
+    .commit_pred_target(rob_commit_pred_target),
+    .commit_pht_index(rob_commit_pht_index),
+    .commit_ghr_snapshot(rob_commit_ghr_snapshot),
     .head_sent_RS(rob_head_tag)
 );
 RS rs(
     .clk(cpu_clk),
     .rst_n(rst_n),
+    .flush(frontend_flush),
     .rs_alloc_ready(rs_alloc_ready),
     .dispatch_fire(dispatch_fire),
     .dispatch_rob_tag(dispatch_rob_tag),
@@ -337,10 +462,15 @@ RS rs(
 rename Rename(
     .clk(cpu_clk),
     .rst_n(rst_n),
+    .flush(frontend_flush),
     .dec_valid(if_id_valid),
     .dec_ready(dec_ready),
     .dec_kind(kind),
     .dec_funct3(if_id_instr[14:12]),
+    .dec_pred_taken(if_id_pred_taken),
+    .dec_pred_target(if_id_pred_target),
+    .dec_pht_index(if_id_pht_index),
+    .dec_ghr_snapshot(if_id_ghr_snapshot),
     .dec_alu_src_a(alu_src_a),
     .dec_alu_src_b(alu_src_b),
     .dec_pc(if_id_pc),
@@ -362,6 +492,11 @@ rename Rename(
     .rob_rd(rob_alloc_rd),
     .rob_alloc_reg_write(rob_alloc_reg_write),
     .rob_alloc_pc(rob_alloc_pc),
+    .rob_alloc_funct3(rob_alloc_funct3),
+    .rob_alloc_pred_taken(rob_alloc_pred_taken),
+    .rob_alloc_pred_target(rob_alloc_pred_target),
+    .rob_alloc_pht_index(rob_alloc_pht_index),
+    .rob_alloc_ghr_snapshot(rob_alloc_ghr_snapshot),
     .rob_rs1_tag(rs1_tag),
     .rob_rs1_valid(rs1_valid),
     .rob_rs1_ready(rs1_ready),
@@ -400,6 +535,7 @@ rename Rename(
 issue_ex u_issue_ex(
     .clk(cpu_clk),
     .rst_n(rst_n),
+    .flush(frontend_flush),
     .in_valid(rs_issue_valid),
     .in_rob_tag(rs_issue_rob_tag),
     .in_alu_control(rs_issue_alu_control),
@@ -434,8 +570,8 @@ alu ALU(
 ex_wb u_ex_wb(
     .clk(cpu_clk),
     .rst_n(rst_n),
-    //.in_valid(ex_complete_valid),
-    .in_valid(),//wb_valid
+    .flush(frontend_flush),
+    .in_valid(ex_complete_valid),
     .in_rob_tag(issue_ex_rob_tag),
     .in_value(ex_value),
     .in_result_valid(ex_result_valid),
@@ -443,6 +579,9 @@ ex_wb u_ex_wb(
     .in_actual_taken(ex_actual_taken),
     .in_actual_target(ex_actual_target),
     .in_actual_next_pc(ex_actual_next_pc),
+    .in_mem_prepare(ex_mem_prepare),
+    .in_mem_addr(ex_mem_addr),
+    .in_store_data(ex_store_data),
     .out_valid(ex_wb_valid),
     .out_rob_tag(ex_wb_rob_tag),
     .out_value(ex_wb_value),
@@ -450,7 +589,10 @@ ex_wb u_ex_wb(
     .out_kind(ex_wb_kind),
     .out_actual_taken(ex_wb_actual_taken),
     .out_actual_target(ex_wb_actual_target),
-    .out_actual_next_pc(ex_wb_actual_next_pc)
+    .out_actual_next_pc(ex_wb_actual_next_pc),
+    .out_mem_prepare(ex_wb_mem_prepare),
+    .out_mem_addr(ex_wb_mem_addr),
+    .out_store_data(ex_wb_store_data)
 );
 regfile u_regfile(
     .raddr1(arf_rs1_addr),

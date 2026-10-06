@@ -1,6 +1,7 @@
 module issue_ex(
     input logic clk,
     input logic rst_n,
+    input logic flush,
 
     input logic in_valid,
     input logic [2:0] in_rob_tag,
@@ -42,6 +43,9 @@ module issue_ex(
             out_funct3<=3'd0;
             out_alu_src_a<=2'd0;
             out_alu_src_b<=0;
+        end
+        else if(flush)begin
+            out_valid<=1'b0;
         end
         else begin
             out_valid<=in_valid;

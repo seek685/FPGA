@@ -1,6 +1,7 @@
 module rob(
     input logic clk,
     input logic rst_n,
+    input logic flush,
     //rename
     output logic alloc_ready,
     output logic [2:0] alloc_tag,
@@ -11,7 +12,11 @@ module rob(
 
     input logic [2:0] alloc_kind,
     //add funct3
-    input logic [2:0] funct3,
+    input logic [2:0] alloc_funct3,
+    input logic alloc_pred_taken,
+    input logic [31:0] alloc_pred_target,
+    input logic [11:0] alloc_pht_index,
+    input logic [11:0] alloc_ghr_snapshot,
 
     //inquire/query 
     //RS inquire RAT ,RAT inquire ROB
@@ -45,6 +50,10 @@ module rob(
     output logic commit_actual_taken,
     output logic [31:0] commit_actual_target,
     output logic [31:0] commit_actual_next_pc,
+    output logic commit_pred_taken,
+    output logic [31:0] commit_pred_target,
+    output logic [11:0] commit_pht_index,
+    output logic [11:0] commit_ghr_snapshot,
 
     output logic [2:0] head_sent_RS,
     //add access memory (in)
@@ -81,6 +90,10 @@ module rob(
         logic [31:0] mem_addr;
         logic [31:0] store_data;
         logic [2:0] funct3;//judge LB/LH/LW/LBU/LHU or SB/SH/SW
+        logic pred_taken;
+        logic [31:0] pred_target;
+        logic [11:0] pht_index;
+        logic [11:0] ghr_snapshot;
     }ROB_t;
     ROB_t ROB [0:7];
 
@@ -104,6 +117,10 @@ module rob(
         commit_actual_target=32'd0;
         commit_actual_next_pc=32'd0;
         commit_actual_taken=0;
+        commit_pred_taken=1'b0;
+        commit_pred_target=32'd0;
+        commit_pht_index=12'd0;
+        commit_ghr_snapshot=12'd0;
         if(ROB[head].ready==1 && ROB[head].valid==1 &&count!=0)begin
             commit_valid=1;
             commit_tag=head;
@@ -115,21 +132,25 @@ module rob(
             commit_actual_target=ROB[head].actual_target;
             commit_actual_taken=ROB[head].actual_taken;
             commit_actual_next_pc=ROB[head].actual_next_pc;
+            commit_pred_taken=ROB[head].pred_taken;
+            commit_pred_target=ROB[head].pred_target;
+            commit_pht_index=ROB[head].pht_index;
+            commit_ghr_snapshot=ROB[head].ghr_snapshot;
         end else commit_valid=0;
 
         //support load instruction 
         head_valid=0;
         head_kind=3'd0;
-        head_mem_prepared=0;
+        head_mem_prepare=0;
         head_mem_addr=32'd0;
         head_store_data=32'd0;
         head_funct3=3'd0;
         if(ROB[head].valid==1&&count!=0)begin
             head_valid=1;
             head_kind=ROB[head].kind;
-            head_mem_prepared=ROB[head].mem_prepare;
+            head_mem_prepare=ROB[head].mem_prepare;
             head_mem_addr=ROB[head].mem_addr;
-            head_store_data=ROb[head].store_data;
+            head_store_data=ROB[head].store_data;
             head_funct3=ROB[head].funct3;
         end
         
@@ -193,7 +214,17 @@ module rob(
                 ROB[i].ready<=0;
                 ROB[i].valid<=0;
             end
-        end     
+        end
+        else if(flush)begin
+            head<=3'd0;
+            tail<=3'd0;
+            count<=4'd0;
+            for(int i=0;i<8;i++)begin
+                ROB[i].ready<=1'b0;
+                ROB[i].valid<=1'b0;
+                ROB[i].mem_prepare<=1'b0;
+            end
+        end
         else begin
             //commit
             if(commit_fire==1)begin
@@ -220,7 +251,13 @@ module rob(
                 ROB[tail].pc<=alloc_pc;
                 ROB[tail].kind<=alloc_kind;
                 ROB[tail].mem_prepare<=0;
-                ROB[tail].funct3;
+                ROB[tail].mem_addr<=32'd0;
+                ROB[tail].store_data<=32'd0;
+                ROB[tail].funct3<=alloc_funct3;
+                ROB[tail].pred_taken<=alloc_pred_taken;
+                ROB[tail].pred_target<=alloc_pred_target;
+                ROB[tail].pht_index<=alloc_pht_index;
+                ROB[tail].ghr_snapshot<=alloc_ghr_snapshot;
                 //alloc_tag<=tail;
                 tail<=tail+3'd1;
                 //alloc_ready<=1'b1;
@@ -231,6 +268,14 @@ module rob(
                 ROB[wb_tag].actual_target<=wb_actual_target;
                 ROB[wb_tag].actual_next_pc<=wb_actual_next_pc;
                 ROB[wb_tag].ready<=1'b1;
+            end
+
+            if(mem_prepare_valid)begin
+                ROB[mem_prepare_tag].mem_prepare<=1'b1;
+                ROB[mem_prepare_tag].mem_addr<=mem_prepare_addr;
+                ROB[mem_prepare_tag].store_data<=mem_prepare_store_data;
+                if(ROB[mem_prepare_tag].kind==3'd5)
+                    ROB[mem_prepare_tag].ready<=1'b1;
             end
 
             if(alloc_fire==0&&commit_fire)begin

@@ -1,6 +1,7 @@
 module RS(
     input logic clk,
     input logic rst_n,
+    input logic flush,
 
     output logic rs_alloc_ready,
     input logic dispatch_fire,
@@ -188,6 +189,11 @@ module RS(
 
     always_ff @(posedge clk)begin
         if(!rst_n)begin
+            for(int i=0;i<4;i++)begin
+                RS[i].busy<=1'b0;
+            end
+        end
+        else if(flush)begin
             for(int i=0;i<4;i++)begin
                 RS[i].busy<=1'b0;
             end

@@ -1,6 +1,7 @@
 module ex_wb(
     input logic clk,
     input logic rst_n,
+    input logic flush,
 
     input logic in_valid,
     input logic [2:0] in_rob_tag,
@@ -43,7 +44,12 @@ module ex_wb(
             out_actual_next_pc<=32'd0;
             out_mem_prepare<=0;
             out_mem_addr<=32'd0;
-            out_mem_data<=32'd0;
+            out_store_data<=32'd0;
+        end
+        else if(flush)begin
+            out_valid<=1'b0;
+            out_result_valid<=1'b0;
+            out_mem_prepare<=1'b0;
         end
         else begin
             out_valid<=in_valid;
@@ -56,7 +62,7 @@ module ex_wb(
             out_actual_next_pc<=in_actual_next_pc;
             out_mem_prepare<=in_mem_prepare;
             out_mem_addr<=in_mem_addr;
-            out_mem_data<=in_mem_data;
+            out_store_data<=in_store_data;
         end
     end
 

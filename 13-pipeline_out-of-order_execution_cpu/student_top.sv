@@ -50,7 +50,7 @@ module student_top#(
     // 16KB = 2^12 * 32bit
     assign inst_addr =(pc-32'h8000_0000)>>2;//pc[13:2]
 
-    myCPU Core_cpu (
+    out_of_order_cpu Core_cpu (
         .cpu_rst            (w_clk_rst),
         .cpu_clk            (w_cpu_clk),
 
